@@ -342,6 +342,7 @@ model Appointment {
   status              AppointmentStatus @default(PENDING_PAYMENT)
   reservedUntil       DateTime?         // 15 min para pagar
   googleEventId       String?           // ID del evento en Google Calendar
+  meetLink            String?           // Link de Google Meet generado automáticamente
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
