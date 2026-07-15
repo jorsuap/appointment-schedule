@@ -39,8 +39,9 @@ const appointments = [
 ];
 
 const progressNotes = [
-  { id: '1', appointmentId: '1', date: '2026-07-10', content: 'Paciente reporta mejoría en patrón de sueño. Trabajamos técnica de respiración 4-7-8. Tarea: registrar calidad de sueño durante la semana.' },
-  { id: '2', appointmentId: '2', date: '2026-07-03', content: 'Identificamos gatillos principales de ansiedad: carga laboral y comunicación con pareja. Se introduce técnica de journaling.' },
+  { id: '1', date: '2026-07-10', content: 'Paciente reporta mejoría en patrón de sueño. Trabajamos técnica de respiración 4-7-8. Tarea: registrar calidad de sueño durante la semana.' },
+  { id: '2', date: '2026-07-03', content: 'Identificamos gatillos principales de ansiedad: carga laboral y comunicación con pareja. Se introduce técnica de journaling.' },
+  { id: '3', date: '2026-06-26', content: 'Primera sesión. Rapport establecido. Paciente expresa sentirse abrumada por cambios recientes en su trabajo. Se establece plan de acompañamiento inicial.' },
 ];
 
 export default function PacienteDetailPage() {
@@ -79,7 +80,6 @@ export default function PacienteDetailPage() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="ficha">Ficha</TabsTrigger>
           <TabsTrigger value="citas">Citas ({appointments.length})</TabsTrigger>
-          <TabsTrigger value="notas">Notas ({progressNotes.length})</TabsTrigger>
         </TabsList>
 
         {/* Ficha del paciente */}
@@ -172,6 +172,69 @@ export default function PacienteDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Notas de progreso — dentro de la ficha */}
+          <Card className="border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base text-grape">
+                Notas de progreso (HC)
+              </CardTitle>
+              {!showNoteForm && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={() => setShowNoteForm(true)}
+                >
+                  <Plus className="h-3 w-3" />
+                  Agregar nota
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Form to add new note */}
+              {showNoteForm && (
+                <div className="rounded-lg border border-plum/30 bg-secondary/30 p-3">
+                  <Textarea
+                    placeholder="Escribe tu nota de progreso..."
+                    className="min-h-[100px] border-0 bg-transparent text-sm focus-visible:ring-0"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" onClick={handleSaveNote} disabled={!newNote.trim()}>
+                      Guardar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowNoteForm(false);
+                        setNewNote('');
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing notes */}
+              {progressNotes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Aún no hay notas de progreso registradas.
+                </p>
+              ) : (
+                progressNotes.map((note) => (
+                  <div key={note.id} className="rounded-lg border border-border/40 p-3">
+                    <p className="text-[11px] font-medium text-plum">{note.date}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">{note.content}</p>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Historial de citas */}
@@ -185,60 +248,6 @@ export default function PacienteDetailPage() {
                     <p className="text-xs text-muted-foreground">{apt.professional}</p>
                   </div>
                   <Badge variant="secondary">{apt.status === 'COMPLETED' ? 'Completada' : apt.status}</Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Notas de progreso */}
-        <TabsContent value="notas" className="mt-4">
-          <div className="mb-4">
-            {!showNoteForm ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setShowNoteForm(true)}
-              >
-                <Plus className="h-4 w-4" />
-                Agregar nota
-              </Button>
-            ) : (
-              <Card className="border-border/40">
-                <CardContent className="space-y-3 p-4">
-                  <Textarea
-                    placeholder="Escribe tu nota de progreso de la sesión..."
-                    className="min-h-[100px] text-base"
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveNote}>
-                      Guardar nota
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowNoteForm(false);
-                        setNewNote('');
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {progressNotes.map((note) => (
-              <Card key={note.id} className="border-border/40">
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">{note.date}</p>
-                  <p className="mt-1 text-sm leading-relaxed">{note.content}</p>
                 </CardContent>
               </Card>
             ))}

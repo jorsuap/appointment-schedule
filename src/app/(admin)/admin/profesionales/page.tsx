@@ -53,6 +53,8 @@ export default function ProfesionalesPage() {
     email: '',
     specialty: '',
     description: '',
+    price: '',
+    commission: '',
     traits: [] as string[],
     services: [] as string[],
   });
@@ -79,7 +81,7 @@ export default function ProfesionalesPage() {
     // TODO: Save to database
     console.log('New professional:', newPro);
     setShowModal(false);
-    setNewPro({ name: '', email: '', specialty: '', description: '', traits: [], services: [] });
+    setNewPro({ name: '', email: '', specialty: '', description: '', price: '', commission: '', traits: [], services: [] });
   }
 
   return (
@@ -211,6 +213,40 @@ export default function ProfesionalesPage() {
                   />
                 </div>
 
+                {/* Price & Commission */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm">Precio sesión (COP) *</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      className="mt-1 h-11 text-base"
+                      placeholder="80000"
+                      value={newPro.price}
+                      onChange={(e) => setNewPro({ ...newPro, price: e.target.value.replace(/\D/g, '') })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Comisión plataforma (%) *</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      className="mt-1 h-11 text-base"
+                      placeholder="40"
+                      value={newPro.commission}
+                      onChange={(e) => setNewPro({ ...newPro, commission: e.target.value.replace(/\D/g, '') })}
+                    />
+                  </div>
+                </div>
+                {newPro.price && newPro.commission && (
+                  <div className="rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">Pago neto profesional: </span>
+                    <span className="font-semibold text-grape">
+                      ${(Number(newPro.price) - (Number(newPro.price) * Number(newPro.commission)) / 100).toLocaleString('es-CO')} COP
+                    </span>
+                  </div>
+                )}
+
                 {/* Services */}
                 <div>
                   <Label className="text-sm">Servicios que ofrece *</Label>
@@ -264,7 +300,7 @@ export default function ProfesionalesPage() {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!newPro.name || !newPro.email || !newPro.specialty || newPro.services.length === 0}
+                disabled={!newPro.name || !newPro.email || !newPro.specialty || !newPro.price || !newPro.commission || newPro.services.length === 0}
               >
                 Guardar profesional
               </Button>
