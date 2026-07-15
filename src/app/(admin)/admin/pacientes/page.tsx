@@ -66,10 +66,10 @@ export default function PacientesPage() {
       </div>
 
       {/* Patient list */}
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 flex flex-col gap-4">
         {filtered.map((patient) => (
-          <Link key={patient.id} href={`/admin/pacientes/${patient.id}`}>
-            <Card className="cursor-pointer border-border/40 transition-all hover:border-plum hover:shadow-sm">
+          <Link key={patient.id} href={`/admin/pacientes/${patient.id}`} className="block">
+            <Card className="cursor-pointer border-border/40 py-0 transition-all hover:border-plum hover:shadow-sm">
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-plum/20 text-sm font-semibold text-grape">
                   {patient.fullName

@@ -1,10 +1,16 @@
 'use client';
 
-import { Plus, Edit, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { Plus, ChevronRight, ToggleRight, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // TODO: Fetch from database
 const professionals = [
@@ -16,7 +22,7 @@ const professionals = [
     isActive: true,
     traits: ['Cálida', 'Profunda', 'Reflexiva', 'Sensible'],
     services: ['Acompañamiento emocional', 'Acompañamiento maternidad posparto'],
-    totalAppointments: 18,
+    upcomingAppointments: 3,
   },
   {
     id: '2',
@@ -26,89 +32,246 @@ const professionals = [
     isActive: true,
     traits: ['Cercana', 'Práctica', 'Compasiva', 'Concreta'],
     services: ['Acompañamiento maternidad posparto', 'Acompañamiento emocional'],
-    totalAppointments: 12,
+    upcomingAppointments: 2,
   },
 ];
 
+const availableServices = [
+  { id: '1', name: 'Acompañamiento emocional' },
+  { id: '2', name: 'Acompañamiento maternidad posparto' },
+];
+
+const availableTraits = [
+  'Cálida', 'Profunda', 'Reflexiva', 'Sensible', 'Cercana', 'Práctica',
+  'Compasiva', 'Concreta', 'Espiritual', 'Breve', 'Directa',
+];
+
 export default function ProfesionalesPage() {
+  const [showModal, setShowModal] = useState(false);
+  const [newPro, setNewPro] = useState({
+    name: '',
+    email: '',
+    specialty: '',
+    description: '',
+    traits: [] as string[],
+    services: [] as string[],
+  });
+
+  function toggleTrait(trait: string) {
+    setNewPro((prev) => ({
+      ...prev,
+      traits: prev.traits.includes(trait)
+        ? prev.traits.filter((t) => t !== trait)
+        : [...prev.traits, trait],
+    }));
+  }
+
+  function toggleService(serviceId: string) {
+    setNewPro((prev) => ({
+      ...prev,
+      services: prev.services.includes(serviceId)
+        ? prev.services.filter((s) => s !== serviceId)
+        : [...prev.services, serviceId],
+    }));
+  }
+
+  function handleSave() {
+    // TODO: Save to database
+    console.log('New professional:', newPro);
+    setShowModal(false);
+    setNewPro({ name: '', email: '', specialty: '', description: '', traits: [], services: [] });
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-grape sm:text-3xl">Profesionales</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Gestiona los perfiles del equipo</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gestiona perfiles, agenda, disponibilidad y tarifas
+          </p>
         </div>
-        <Button className="gap-1">
+        <Button className="gap-1" onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4" />
           Agregar profesional
         </Button>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 flex flex-col gap-4">
         {professionals.map((pro) => {
-          const initials = pro.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .slice(0, 2);
+          const initials = pro.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
 
           return (
-            <Card key={pro.id} className="border-border/40">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-plum/20 font-semibold text-grape">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-grape">{pro.name}</p>
-                      <p className="text-xs text-muted-foreground">{pro.specialty}</p>
+            <Link key={pro.id} href={`/admin/profesionales/${pro.id}`} className="block">
+              <Card className="cursor-pointer border-border/40 py-0 transition-all hover:border-plum hover:shadow-sm">
+                <CardContent className="flex items-center gap-4 p-4 sm:p-5">
+                  <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarFallback className="bg-plum/20 font-semibold text-grape">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-semibold text-grape">{pro.name}</p>
+                      <ToggleRight className="h-4 w-4 shrink-0 text-green-500" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{pro.specialty}</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {pro.traits.map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-jasmine/30 px-2 py-0.5 text-[10px] font-medium text-grape"
+                        >
+                          {t}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {pro.isActive ? (
-                      <ToggleRight className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <ToggleLeft className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
 
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {pro.traits.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-jasmine/30 px-2 py-0.5 text-xs font-medium text-grape"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {pro.services.map((s) => (
-                    <Badge key={s} variant="secondary" className="text-xs">
-                      {s}
+                  <div className="hidden flex-col items-end gap-1 sm:flex">
+                    <Badge variant="secondary" className="text-xs">
+                      {pro.upcomingAppointments} citas próximas
                     </Badge>
-                  ))}
-                </div>
+                    <div className="flex gap-1">
+                      {pro.services.map((s) => (
+                        <Badge key={s} variant="outline" className="text-[10px]">
+                          {s.split(' ')[0]}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
-                  <span className="text-xs text-muted-foreground">
-                    {pro.totalAppointments} citas realizadas
-                  </span>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                    <Edit className="h-3 w-3" />
-                    Editar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
           );
         })}
       </div>
+
+      {/* Modal: Agregar profesional */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-10 sm:items-center sm:pt-4">
+          <div className="w-full max-w-lg rounded-xl border border-border bg-white shadow-lg">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
+              <h2 className="text-lg font-bold text-grape">Agregar profesional</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Body */}
+            <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm">Nombre completo *</Label>
+                  <Input
+                    className="mt-1 h-11 text-base"
+                    placeholder="Nombre del profesional"
+                    value={newPro.name}
+                    onChange={(e) => setNewPro({ ...newPro, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">Correo electrónico *</Label>
+                  <Input
+                    type="email"
+                    className="mt-1 h-11 text-base"
+                    placeholder="email@conalma.co"
+                    value={newPro.email}
+                    onChange={(e) => setNewPro({ ...newPro, email: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">Especialidad *</Label>
+                  <Input
+                    className="mt-1 h-11 text-base"
+                    placeholder="Ej: Psicóloga Clínica"
+                    value={newPro.specialty}
+                    onChange={(e) => setNewPro({ ...newPro, specialty: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm">Descripción</Label>
+                  <Textarea
+                    className="mt-1 min-h-[80px] text-base"
+                    placeholder="Breve descripción del profesional y su enfoque..."
+                    value={newPro.description}
+                    onChange={(e) => setNewPro({ ...newPro, description: e.target.value })}
+                  />
+                </div>
+
+                {/* Services */}
+                <div>
+                  <Label className="text-sm">Servicios que ofrece *</Label>
+                  <div className="mt-2 space-y-2">
+                    {availableServices.map((service) => (
+                      <label
+                        key={service.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/40 px-3 py-2.5 transition-colors hover:bg-secondary/50"
+                      >
+                        <Checkbox
+                          checked={newPro.services.includes(service.id)}
+                          onCheckedChange={() => toggleService(service.id)}
+                          className="h-5 w-5 border-grape bg-white"
+                        />
+                        <span className="text-sm">{service.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Traits */}
+                <div>
+                  <Label className="text-sm">Características de estilo</Label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Selecciona las que mejor describan al profesional
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {availableTraits.map((trait) => (
+                      <button
+                        key={trait}
+                        type="button"
+                        onClick={() => toggleTrait(trait)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                          newPro.traits.includes(trait)
+                            ? 'bg-grape text-white'
+                            : 'bg-secondary text-grape hover:bg-plum/20'
+                        }`}
+                      >
+                        {trait}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2 border-t border-border/40 px-5 py-4">
+              <Button variant="ghost" onClick={() => setShowModal(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={!newPro.name || !newPro.email || !newPro.specialty || newPro.services.length === 0}
+              >
+                Guardar profesional
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

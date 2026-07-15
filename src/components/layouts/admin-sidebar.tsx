@@ -9,7 +9,6 @@ import {
   CalendarDays,
   UserCircle,
   Briefcase,
-  Clock,
   FileText,
   Menu,
   X,
@@ -21,10 +20,9 @@ import { Button } from '@/components/ui/button';
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/pacientes', label: 'Pacientes', icon: Users },
-  { href: '/admin/citas', label: 'Citas', icon: CalendarDays },
+  { href: '/admin/calendario', label: 'Calendario', icon: CalendarDays },
   { href: '/admin/profesionales', label: 'Profesionales', icon: UserCircle },
-  { href: '/admin/servicios', label: 'Servicios', icon: Briefcase },
-  { href: '/admin/disponibilidad', label: 'Disponibilidad', icon: Clock },
+  { href: '/admin/metricas', label: 'Métricas', icon: Briefcase },
   { href: '/admin/contenido', label: 'Contenido', icon: FileText },
 ];
 

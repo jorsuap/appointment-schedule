@@ -32,12 +32,19 @@ const datosSchema = z.object({
   email: z.string().email('Ingresa un correo electrónico válido'),
   country: z.string().min(1, 'Selecciona tu país de residencia'),
   isAdult: z.enum(['si', 'no'], { message: 'Selecciona una opción' }),
+  minorConsent: z.boolean().optional(),
   dataPrivacyConsent: z.boolean().refine((v) => v === true, {
     message: 'Debes aceptar la política de tratamiento de datos',
   }),
   commsConsent: z.boolean().refine((v) => v === true, {
     message: 'Debes autorizar las comunicaciones transaccionales',
   }),
+}).refine((data) => {
+  if (data.isAdult === 'no') return data.minorConsent === true;
+  return true;
+}, {
+  message: 'Debes confirmar que cuentas con el consentimiento del tutor legal',
+  path: ['minorConsent'],
 });
 
 type DatosFormValues = z.infer<typeof datosSchema>;
@@ -55,6 +62,7 @@ export default function DatosPage() {
       dateOfBirth: '',
       email: '',
       country: '',
+      minorConsent: false,
       dataPrivacyConsent: false,
       commsConsent: false,
     },
@@ -82,7 +90,7 @@ export default function DatosPage() {
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-28 pt-10 sm:pb-16 sm:pt-16">
       <div className="text-center">
-        <p className="text-sm font-medium text-plum">Paso 2 de 6</p>
+        <p className="text-sm font-medium text-plum">Paso 1 de 6</p>
         <h1 className="mt-2 text-2xl font-bold text-grape sm:text-3xl">Cuéntanos sobre ti</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Esta información nos ayuda a preparar un espacio personalizado para ti.
@@ -208,6 +216,31 @@ export default function DatosPage() {
               </FormItem>
             )}
           />
+
+          {/* Minor consent - conditional */}
+          {form.watch('isAdult') === 'no' && (
+            <FormField
+              control={form.control}
+              name="minorConsent"
+              render={({ field }) => (
+                <FormItem className="flex gap-3 space-y-0 rounded-xl border border-jasmine bg-jasmine/10 p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="mt-1 h-5 w-5 shrink-0 border-grape bg-white"
+                    />
+                  </FormControl>
+                  <div className="flex-1">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      Confirmo que cuento con el <strong>consentimiento informado del padre, madre o tutor legal</strong> del menor de edad que recibirá el acompañamiento, y que estoy autorizado/a para gestionar este proceso en su nombre.
+                    </p>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+          )}
 
           {/* Consentimientos — layout fix */}
           <div className="rounded-xl border border-border/60 bg-secondary/30 p-4 sm:p-5">

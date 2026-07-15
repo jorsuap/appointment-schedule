@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/form';
 
 const evaluacionSchema = z.object({
-  reasonForVisit: z.string().min(10, 'Cuéntanos un poco más sobre lo que te trae aquí'),
-  recentFeelings: z.string().min(10, 'Describe brevemente cómo te has sentido'),
+  reasonForVisit: z.string().min(1, 'Este campo es requerido'),
+  recentFeelings: z.string().min(1, 'Este campo es requerido'),
   selfHarmRisk: z.enum(['si', 'no'], { message: 'Selecciona una opción' }),
   currentTreatment: z.enum(['si', 'no'], { message: 'Selecciona una opción' }),
   previousDiagnosis: z.string().optional(),
@@ -83,7 +83,7 @@ export default function EvaluacionPage() {
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-28 pt-10 sm:pb-16 sm:pt-16">
       <div className="text-center">
-        <p className="text-sm font-medium text-plum">Paso 2 de 6 — Evaluación</p>
+        <p className="text-sm font-medium text-plum">Paso 2 de 6</p>
         <h1 className="mt-2 text-2xl font-bold text-grape sm:text-3xl">
           Queremos conocerte mejor
         </h1>
@@ -281,7 +281,7 @@ export default function EvaluacionPage() {
                   <div className="flex-1">
                     <p className="text-sm leading-relaxed text-foreground">
                       Confirmo que entiendo que este servicio ofrece{' '}
-                      <strong>acompañamiento emocional online para adultos</strong> y que no
+                      <strong>acompañamiento emocional online</strong> y que no
                       constituye atención de urgencias, tratamiento médico, psiquiátrico ni
                       reemplaza la atención presencial especializada cuando sea necesaria.
                     </p>
