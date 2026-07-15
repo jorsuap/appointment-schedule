@@ -11,7 +11,7 @@ const services = [
     id: '1',
     name: 'Acompañamiento emocional',
     description:
-      'Sesiones individuales para explorar tus emociones y fortalecer tu bienestar mental.',
+      'Sesiones individuales para explorar tus emociones y fortalecer tu bienestar emocional.',
     durationMin: 60,
   },
   {
@@ -27,8 +27,7 @@ export default function AgendarPage() {
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-10 sm:py-16">
       <div className="text-center">
-        <p className="text-sm font-medium text-plum">Paso 1 de 6</p>
-        <h1 className="mt-2 text-2xl font-bold text-grape sm:text-3xl">
+        <h1 className="text-2xl font-bold text-grape sm:text-3xl">
           ¿Qué tipo de acompañamiento buscas?
         </h1>
         <p className="mt-2 text-sm text-muted-foreground sm:text-base">
