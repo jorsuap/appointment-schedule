@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resend, FROM_EMAIL } from '@/lib/resend';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/test/email — Send a test email (dev/admin only)
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
