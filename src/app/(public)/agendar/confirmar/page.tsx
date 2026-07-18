@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { useBookingStore } from '@/stores/booking-store';
 
 const confirmarSchema = z.object({
   payerName: z.string().min(3, 'Ingresa tu nombre completo'),
@@ -41,26 +42,23 @@ export default function ConfirmarPage() {
   const searchParams = useSearchParams();
   const fecha = searchParams.get('fecha');
   const hora = searchParams.get('hora');
+  const servicioId = searchParams.get('servicio');
+  const profesionalId = searchParams.get('profesional');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const bookingStore = useBookingStore();
 
   const form = useForm<ConfirmarFormValues>({
     resolver: zodResolver(confirmarSchema),
     defaultValues: {
-      payerName: '',
-      payerEmail: '',
+      payerName: bookingStore.patientData?.fullName || '',
+      payerEmail: bookingStore.patientData?.email || '',
       timezoneConfirm: false,
       consentimiento: false,
       commsAuthorization: false,
     },
   });
-
-  async function onSubmit(values: ConfirmarFormValues) {
-    setIsSubmitting(true);
-    // TODO: Create appointment in DB → redirect to Wompi checkout
-    console.log(values);
-    // router.push(wompiCheckoutUrl);
-    setIsSubmitting(false);
-  }
 
   const formattedDate = fecha
     ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-CO', {
@@ -70,6 +68,69 @@ export default function ConfirmarPage() {
         year: 'numeric',
       })
     : '';
+
+  async function onSubmit(values: ConfirmarFormValues) {
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      // 1. Create appointment
+      const appointmentRes = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...bookingStore.patientData,
+          ...bookingStore.evaluationData,
+          ...bookingStore.emergencyData,
+          professionalId: profesionalId,
+          serviceId: servicioId,
+          date: fecha,
+          startTime: hora,
+        }),
+      });
+
+      if (!appointmentRes.ok) {
+        const err = await appointmentRes.json();
+        throw new Error(err.error || 'Error al crear la cita');
+      }
+
+      const { appointment } = await appointmentRes.json();
+
+      // 2. Create payment session
+      const paymentRes = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointmentId: appointment.id,
+          payerName: values.payerName,
+          payerEmail: values.payerEmail,
+        }),
+      });
+
+      if (!paymentRes.ok) {
+        const err = await paymentRes.json();
+        throw new Error(err.error || 'Error al crear el pago');
+      }
+
+      const paymentData = await paymentRes.json();
+
+      // 3. Redirect to Wompi checkout
+      const wompiUrl = new URL(paymentData.widgetUrl);
+      wompiUrl.searchParams.set('public-key', paymentData.publicKey);
+      wompiUrl.searchParams.set('currency', paymentData.currency);
+      wompiUrl.searchParams.set('amount-in-cents', String(paymentData.amountInCents));
+      wompiUrl.searchParams.set('reference', paymentData.reference);
+      wompiUrl.searchParams.set('signature:integrity', paymentData.integritySignature);
+      wompiUrl.searchParams.set('redirect-url', paymentData.redirectUrl);
+      wompiUrl.searchParams.set('customer-data:email', paymentData.customerEmail);
+      wompiUrl.searchParams.set('customer-data:full-name', paymentData.customerName);
+
+      window.location.href = wompiUrl.toString();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-24 pt-10 sm:pb-16 sm:pt-16">
@@ -81,7 +142,7 @@ export default function ConfirmarPage() {
         </p>
       </div>
 
-      {/* Resumen de la cita */}
+      {/* Resumen */}
       <Card className="mt-8 border-border/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-base text-grape">Resumen de tu cita</CardTitle>
@@ -99,15 +160,14 @@ export default function ConfirmarPage() {
             <Video className="h-5 w-5 shrink-0 text-plum" />
             <span className="text-sm">Sesión online vía Google Meet</span>
           </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-grape">Total a pagar</span>
-            <span className="text-lg font-bold text-grape">$80.000 COP</span>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Formulario de pago */}
+      {error && (
+        <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
+      )}
+
+      {/* Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-5">
           <FormField
@@ -131,12 +191,7 @@ export default function ConfirmarPage() {
               <FormItem>
                 <FormLabel>Correo electrónico *</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="correo@ejemplo.com"
-                    className="h-12 text-base"
-                    {...field}
-                  />
+                  <Input type="email" placeholder="correo@ejemplo.com" className="h-12 text-base" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -145,20 +200,16 @@ export default function ConfirmarPage() {
 
           <Separator />
 
-          <div className="space-y-4 rounded-xl bg-secondary/50 p-4">
+          <div className="space-y-4 rounded-xl border border-border/60 bg-secondary/30 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-grape">Antes de avanzar...</h3>
 
             <FormField
               control={form.control}
               name="timezoneConfirm"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start gap-3 space-y-0">
+                <FormItem className="flex gap-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="mt-0.5 h-5 w-5"
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mt-1 h-5 w-5 shrink-0 border-grape bg-white" />
                   </FormControl>
                   <div className="flex-1">
                     <Label className="cursor-pointer text-sm font-normal leading-relaxed">
@@ -174,29 +225,18 @@ export default function ConfirmarPage() {
               control={form.control}
               name="consentimiento"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start gap-3 space-y-0">
+                <FormItem className="flex gap-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="mt-0.5 h-5 w-5"
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mt-1 h-5 w-5 shrink-0 border-grape bg-white" />
                   </FormControl>
                   <div className="flex-1">
-                    <Label className="cursor-pointer text-sm font-normal leading-relaxed">
+                    <p className="text-sm font-normal leading-relaxed">
                       Confirmo que he leído y acepto el{' '}
-                      <a
-                        href="/consentimiento"
-                        target="_blank"
-                        className="font-medium text-grape underline"
-                      >
+                      <a href="/consentimiento" target="_blank" className="font-medium text-grape underline">
                         Consentimiento Informado de conAlma
                       </a>
-                      , incluyendo el tratamiento de mis datos personales conforme a la ley, así
-                      como su política de cancelación: las sesiones deben cancelarse con al menos 8
-                      horas de anticipación para recibir reembolso. Cancelaciones con menos de 8
-                      horas o no asistencia serán cobradas en su totalidad.
-                    </Label>
+                      , incluyendo el tratamiento de mis datos personales conforme a la ley, así como su política de cancelación: las sesiones deben cancelarse con al menos 8 horas de anticipación para recibir reembolso.
+                    </p>
                     <FormMessage />
                   </div>
                 </FormItem>
@@ -207,23 +247,14 @@ export default function ConfirmarPage() {
               control={form.control}
               name="commsAuthorization"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start gap-3 space-y-0">
+                <FormItem className="flex gap-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="mt-0.5 h-5 w-5"
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mt-1 h-5 w-5 shrink-0 border-grape bg-white" />
                   </FormControl>
                   <div className="flex-1">
-                    <Label className="cursor-pointer text-sm font-normal leading-relaxed">
-                      Autorizo a <strong>conAlma</strong> a enviarme mensajes de texto (SMS) y
-                      comunicaciones transaccionales relacionadas con el servicio, incluyendo
-                      confirmaciones y recordatorios de sesiones, notificaciones importantes y
-                      mensajes de acompañamiento administrativo. La frecuencia de los mensajes puede
-                      variar. Puedo responder STOP en cualquier momento para dejar de recibir
-                      mensajes.
-                    </Label>
+                    <p className="text-sm font-normal leading-relaxed">
+                      Autorizo a <strong>conAlma</strong> a enviarme comunicaciones transaccionales relacionadas con el servicio. Puedo responder STOP en cualquier momento.
+                    </p>
                     <FormMessage />
                   </div>
                 </FormItem>
@@ -231,21 +262,6 @@ export default function ConfirmarPage() {
             />
           </div>
 
-          <div className="text-center text-xs text-muted-foreground">
-            <a href="/terminos" className="underline" target="_blank">
-              Términos de Servicio
-            </a>{' '}
-            |{' '}
-            <a href="/privacidad" className="underline" target="_blank">
-              Aviso de Privacidad
-            </a>{' '}
-            |{' '}
-            <a href="/consentimiento" className="underline" target="_blank">
-              Consentimiento Informado
-            </a>
-          </div>
-
-          {/* Sticky button on mobile */}
           <div className="fixed inset-x-0 bottom-0 border-t border-border/40 bg-white p-4 sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:pt-2">
             <Button
               type="submit"
@@ -253,7 +269,7 @@ export default function ConfirmarPage() {
               className="h-12 w-full bg-jasmine text-base text-grape hover:bg-jasmine/90"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Procesando...' : 'Ir a pagar $80.000 COP'}
+              {isSubmitting ? 'Procesando...' : 'Ir a pagar'}
             </Button>
           </div>
         </form>

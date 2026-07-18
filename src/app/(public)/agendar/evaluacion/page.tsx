@@ -22,6 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { useBookingStore, type EvaluationData } from '@/stores/booking-store';
 
 const evaluacionSchema = z.object({
   reasonForVisit: z.string().min(1, 'Este campo es requerido'),
@@ -65,8 +66,10 @@ export default function EvaluacionPage() {
 
   const { isValid } = form.formState;
 
+  const { setEvaluationData } = useBookingStore();
+
   function onSubmit(values: EvaluacionFormValues) {
-    console.log(values);
+    setEvaluationData(values as EvaluationData);
     router.push(`/agendar/emergencia?servicio=${servicioId}`);
   }
 

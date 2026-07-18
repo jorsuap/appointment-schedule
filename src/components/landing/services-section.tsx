@@ -1,36 +1,25 @@
-import Link from 'next/link';
 import { LinkButton } from '@/components/ui/link-button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-// These will come from the database (Service model) when connected
-const defaultServices = [
-  {
-    id: '1',
-    name: 'Acompañamiento emocional',
-    description:
-      'Sesiones individuales para explorar tus emociones, desarrollar herramientas de afrontamiento y fortalecer tu bienestar mental con el acompañamiento de un profesional.',
-    durationMin: 60,
-    price: 0, // Will be set from admin
-  },
-  {
-    id: '2',
-    name: 'Acompañamiento maternidad posparto',
-    description:
-      'Espacio seguro para madres que atraviesan la etapa posparto. Te acompañamos con comprensión en los desafíos emocionales de la maternidad.',
-    durationMin: 60,
-    price: 0,
-  },
-];
+interface Service {
+  id: string;
+  name: string;
+  description: string | null;
+  durationMin: number;
+  price: number;
+}
 
 interface ServicesSectionProps {
   title?: string;
   subtitle?: string;
+  services?: Service[];
 }
 
 export function ServicesSection({
   title = 'Nuestros servicios',
   subtitle = 'Elige el tipo de acompañamiento que mejor se adapte a lo que necesitas en este momento.',
+  services = [],
 }: ServicesSectionProps) {
   return (
     <section id="servicios" className="bg-white px-4 py-20 sm:px-6">
@@ -41,7 +30,7 @@ export function ServicesSection({
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2">
-          {defaultServices.map((service) => (
+          {services.map((service) => (
             <Card
               key={service.id}
               className="flex flex-col border-border/40 transition-all hover:border-plum hover:shadow-lg"
@@ -61,7 +50,7 @@ export function ServicesSection({
                 </div>
               </CardContent>
               <CardFooter>
-                <LinkButton href="/agendar" className="w-full">
+                <LinkButton href={`/agendar?servicio=${service.id}`} className="w-full">
                   Agendar
                 </LinkButton>
               </CardFooter>

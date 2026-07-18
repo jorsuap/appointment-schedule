@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { CountrySelect } from '@/components/shared/country-select';
+import { useBookingStore, type EmergencyData } from '@/stores/booking-store';
 
 const emergenciaSchema = z.object({
   emergencyName: z.string().min(3, 'Ingresa el nombre del contacto'),
@@ -64,8 +65,10 @@ export default function EmergenciaPage() {
 
   const { isValid } = form.formState;
 
+  const { setEmergencyData } = useBookingStore();
+
   function onSubmit(values: EmergenciaFormValues) {
-    console.log(values);
+    setEmergencyData(values as EmergencyData);
     router.push(`/agendar/profesional?servicio=${servicioId}`);
   }
 

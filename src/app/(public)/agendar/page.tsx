@@ -1,29 +1,17 @@
-'use client';
-
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { prisma } from '@/lib/prisma';
 
-// TODO: Fetch from database (Service model)
-const services = [
-  {
-    id: '1',
-    name: 'Acompañamiento emocional',
-    description:
-      'Sesiones individuales para explorar tus emociones y fortalecer tu bienestar emocional.',
-    durationMin: 60,
-  },
-  {
-    id: '2',
-    name: 'Acompañamiento maternidad posparto',
-    description:
-      'Espacio seguro para madres que atraviesan la etapa posparto con apoyo profesional.',
-    durationMin: 60,
-  },
-];
+export const dynamic = 'force-dynamic';
 
-export default function AgendarPage() {
+export default async function AgendarPage() {
+  const services = await prisma.service.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: 'asc' },
+  });
+
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-10 sm:py-16">
       <div className="text-center">
@@ -43,9 +31,14 @@ export default function AgendarPage() {
                 <div className="flex-1">
                   <h3 className="text-base font-semibold text-grape">{service.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{service.description}</p>
-                  <Badge variant="secondary" className="mt-2">
-                    {service.durationMin} min
-                  </Badge>
+                  <div className="mt-2 flex gap-2">
+                    <Badge variant="secondary">{service.durationMin} min</Badge>
+                    {service.price > 0 && (
+                      <Badge variant="outline">
+                        ${service.price.toLocaleString('es-CO')} COP
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
               </CardContent>

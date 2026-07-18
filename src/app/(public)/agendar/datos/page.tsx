@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { CountrySelect } from '@/components/shared/country-select';
 import { DatePicker } from '@/components/shared/date-picker';
+import { useBookingStore, type PatientData } from '@/stores/booking-store';
 
 const datosSchema = z.object({
   fullName: z.string().min(3, 'Ingresa tu nombre completo'),
@@ -54,25 +56,31 @@ export default function DatosPage() {
   const searchParams = useSearchParams();
   const servicioId = searchParams.get('servicio');
 
+  const { setPatientData, patientData, setServiceId } = useBookingStore();
+
+  // Set service on mount
+  useEffect(() => {
+    if (servicioId) setServiceId(servicioId);
+  }, [servicioId, setServiceId]);
+
   const form = useForm<DatosFormValues>({
     resolver: zodResolver(datosSchema),
     defaultValues: {
-      fullName: '',
-      preferredName: '',
-      dateOfBirth: '',
-      email: '',
-      country: '',
+      fullName: patientData?.fullName || '',
+      preferredName: patientData?.preferredName || '',
+      dateOfBirth: patientData?.dateOfBirth || '',
+      email: patientData?.email || '',
+      country: patientData?.country || '',
       minorConsent: false,
-      dataPrivacyConsent: false,
-      commsConsent: false,
+      dataPrivacyConsent: patientData?.dataPrivacyConsent || false,
+      commsConsent: patientData?.commsConsent || false,
     },
   });
 
   const { isValid } = form.formState;
 
   function onSubmit(values: DatosFormValues) {
-    // TODO: Save to Zustand booking store
-    console.log(values);
+    setPatientData(values as PatientData);
     router.push(`/agendar/evaluacion?servicio=${servicioId}`);
   }
 
