@@ -74,8 +74,42 @@ export async function POST(request: NextRequest) {
         data: { status: 'CONFIRMED' },
       });
 
-      // Send confirmation email (async, don't block webhook response)
       const appointment = payment.appointment;
+
+      // Create Google Calendar event + Meet link (async)
+      try {
+        const calendarId = appointment.professional.calendarId || appointment.professional.email;
+        const dateStr2 = appointment.date.toISOString().split('T')[0];
+        const startDateTime = `${dateStr2}T${appointment.startTime}:00`;
+        const endDateTime = `${dateStr2}T${appointment.endTime}:00`;
+
+        const { createCalendarEvent } = await import('@/lib/google-calendar');
+        const { eventId, meetLink } = await createCalendarEvent({
+          calendarId,
+          summary: `conAlma — ${appointment.service.name}`,
+          description: `Sesión con ${appointment.patient.preferredName || appointment.patient.fullName}.\nDuración: ${appointment.service.durationMin} min`,
+          startDateTime,
+          endDateTime,
+          attendeeEmail: appointment.patient.email,
+        });
+
+        if (eventId || meetLink) {
+          await prisma.appointment.update({
+            where: { id: payment.appointmentId },
+            data: { googleEventId: eventId, meetLink },
+          });
+        }
+      } catch (calErr) {
+        console.error('[Webhook] Calendar event creation failed:', calErr);
+        // Don't block — appointment is still confirmed
+      }
+
+      // Re-fetch appointment to get meetLink
+      const updatedAppointment = await prisma.appointment.findUnique({
+        where: { id: payment.appointmentId },
+      });
+
+      // Send confirmation email (async, don't block webhook response)
       const dateStr = appointment.date.toLocaleDateString('es-CO', {
         weekday: 'long',
         day: 'numeric',
@@ -91,7 +125,7 @@ export async function POST(request: NextRequest) {
         date: dateStr,
         time: appointment.startTime,
         duration: appointment.service.durationMin,
-        meetLink: appointment.meetLink,
+        meetLink: updatedAppointment?.meetLink || null,
       }).catch((err) => console.error('[Webhook] Email send failed:', err));
 
       console.log(`[Webhook] Appointment ${payment.appointmentId} confirmed, email queued`);

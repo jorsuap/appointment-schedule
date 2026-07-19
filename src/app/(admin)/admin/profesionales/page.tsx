@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, ChevronRight, ToggleRight, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -12,34 +12,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// TODO: Fetch from database
-const professionals = [
-  {
-    id: '1',
-    name: 'Alejandra Moreno',
-    specialty: 'Psicóloga Clínica',
-    email: 'alejandra@conalma.co',
-    isActive: true,
-    traits: ['Cálida', 'Profunda', 'Reflexiva', 'Sensible'],
-    services: ['Acompañamiento emocional', 'Acompañamiento maternidad posparto'],
-    upcomingAppointments: 3,
-  },
-  {
-    id: '2',
-    name: 'Carolina Jiménez',
-    specialty: 'Psicóloga Perinatal',
-    email: 'carolina@conalma.co',
-    isActive: true,
-    traits: ['Cercana', 'Práctica', 'Compasiva', 'Concreta'],
-    services: ['Acompañamiento maternidad posparto', 'Acompañamiento emocional'],
-    upcomingAppointments: 2,
-  },
-];
+// Data loaded from API
+interface Professional {
+  id: string;
+  name: string;
+  specialty: string;
+  email: string;
+  isActive: boolean;
+  traits: string[];
+  services: { service: { id: string; name: string } }[];
+  _count?: { appointments: number };
+}
 
-const availableServices = [
-  { id: '1', name: 'Acompañamiento emocional' },
-  { id: '2', name: 'Acompañamiento maternidad posparto' },
-];
+interface Service {
+  id: string;
+  name: string;
+}
 
 const availableTraits = [
   'Cálida', 'Profunda', 'Reflexiva', 'Sensible', 'Cercana', 'Práctica',
@@ -47,6 +35,9 @@ const availableTraits = [
 ];
 
 export default function ProfesionalesPage() {
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newPro, setNewPro] = useState({
     name: '',
@@ -58,6 +49,17 @@ export default function ProfesionalesPage() {
     traits: [] as string[],
     services: [] as string[],
   });
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/professionals').then((r) => r.json()),
+      fetch('/api/services').then((r) => r.json()),
+    ]).then(([pros, svcs]) => {
+      setProfessionals(pros);
+      setAvailableServices(svcs);
+      setLoading(false);
+    });
+  }, []);
 
   function toggleTrait(trait: string) {
     setNewPro((prev) => ({
@@ -77,11 +79,30 @@ export default function ProfesionalesPage() {
     }));
   }
 
-  function handleSave() {
-    // TODO: Save to database
-    console.log('New professional:', newPro);
-    setShowModal(false);
-    setNewPro({ name: '', email: '', specialty: '', description: '', price: '', commission: '', traits: [], services: [] });
+  async function handleSave() {
+    try {
+      const res = await fetch('/api/professionals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPro),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Error al crear profesional');
+        return;
+      }
+
+      setShowModal(false);
+      setNewPro({ name: '', email: '', specialty: '', description: '', price: '', commission: '', traits: [], services: [] });
+      window.location.reload();
+    } catch {
+      alert('Error de conexión');
+    }
+  }
+
+  if (loading) {
+    return <div className="py-16 text-center text-sm text-muted-foreground">Cargando profesionales...</div>;
   }
 
   return (
@@ -133,12 +154,12 @@ export default function ProfesionalesPage() {
 
                   <div className="hidden flex-col items-end gap-1 sm:flex">
                     <Badge variant="secondary" className="text-xs">
-                      {pro.upcomingAppointments} citas próximas
+                      {(pro as Professional & { _count?: { appointments: number } })._count?.appointments || 0} citas
                     </Badge>
                     <div className="flex gap-1">
-                      {pro.services.map((s) => (
-                        <Badge key={s} variant="outline" className="text-[10px]">
-                          {s.split(' ')[0]}
+                      {pro.services.map((ps) => (
+                        <Badge key={ps.service.id} variant="outline" className="text-[10px]">
+                          {ps.service.name.split(' ')[0]}
                         </Badge>
                       ))}
                     </div>

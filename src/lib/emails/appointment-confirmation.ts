@@ -42,8 +42,8 @@ export function appointmentConfirmationHtml({
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(60, 25, 85, 0.08);">
           <tr>
             <td style="padding: 32px 24px; text-align: center;">
-              <div style="width: 56px; height: 56px; background: #D2AAF0; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 24px;">✓</span>
+              <div style="width: 56px; height: 56px; background: #D2AAF0; border-radius: 50%; margin: 0 auto 16px; line-height: 56px; text-align: center;">
+                <span style="font-size: 24px; vertical-align: middle;">✓</span>
               </div>
               <h2 style="color: #3C1955; font-size: 22px; margin: 0 0 8px;">¡Tu cita está confirmada!</h2>
               <p style="color: #6B4D7A; font-size: 14px; margin: 0;">
