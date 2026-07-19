@@ -1,29 +1,29 @@
 # Configuración Google Calendar — conAlma
 
-## Compartir Google Calendar con la Service Account
+## Para activar videollamadas automáticas (Google Meet)
 
-Cada profesional necesita hacer esto desde su Gmail/Google Calendar personal:
+Cada profesional necesita hacer esto UNA SOLA VEZ desde su cuenta de Gmail:
 
-1. Abre [calendar.google.com](https://calendar.google.com)
-2. En el panel izquierdo, busca el calendario principal (su nombre)
-3. Click en los **3 puntos** al lado del nombre del calendario → **"Configuración y compartir"**
-4. Scroll hasta la sección **"Compartir con personas o grupos específicos"**
-5. Click **"Agregar personas y grupos"**
-6. Pega el email: `conalma-calendar@conalma-502822.iam.gserviceaccount.com`
-7. Permisos: selecciona **"Hacer cambios en eventos"**
-8. Click **"Enviar"**
+1. Abrir [calendar.google.com](https://calendar.google.com) con el Gmail que registró en la plataforma
+2. En el panel izquierdo, pasar el mouse sobre su nombre de calendario → click en **⋮** (3 puntos verticales)
+3. Click en **"Config. y uso compartido"**
+4. En el menú izquierdo, click en **"Se compartió con"**
+5. Click en **"+ Agregar personas y grupos"**
+6. Pegar el email: `conalma-calendar@conalma-502822.iam.gserviceaccount.com`
+7. En Permisos seleccionar: **"Realizar cambios en los eventos"**
+8. Click en **"Enviar"**
 
-Repite esto con el correo de cada profesional.
+## ¿Qué pasa después?
+
+Una vez compartido, cada vez que un paciente pague una cita con ese profesional:
+
+- Se crea automáticamente un evento en el Google Calendar del profesional
+- Se genera un link de Google Meet
+- Se envía invitación al paciente (le aparece en su calendario)
+- El link de Meet se incluye en el email de confirmación
 
 ## Importante
 
-El `calendarId` de cada profesional en la base de datos es su email de Google Calendar (normalmente su Gmail). Si usan `alejandra@conalma.co` como calendario, ese es el calendarId. Si no, usa su Gmail personal.
-
-## Qué hace la integración
-
-Cuando un pago es confirmado:
-
-1. Se crea un evento en el Google Calendar del profesional
-2. Se genera automáticamente un link de Google Meet
-3. Se envía invitación al paciente (se agrega a su Google Calendar)
-4. El link de Meet se guarda en la base de datos y se incluye en el email de confirmación
+- El Gmail del profesional (el que se registra en la plataforma) ES el calendario donde se crean los eventos
+- Si el profesional no comparte su calendario, la cita se confirma igual pero SIN link de Meet
+- Este paso solo se hace una vez por profesional

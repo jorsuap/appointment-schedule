@@ -221,16 +221,22 @@ export default function ProfesionalesPage() {
 
                 {/* Google Calendar instructions */}
                 <div className="rounded-xl border border-plum/30 bg-secondary/20 p-4">
-                  <p className="text-xs font-semibold text-grape">📋 Instrucciones para el profesional:</p>
+                  <p className="text-xs font-semibold text-grape">📋 Para activar videollamadas automáticas:</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    El profesional debe compartir su Google Calendar con conAlma. Solo se hace una vez:
+                  </p>
                   <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-                    <li>1. Abrir <strong>calendar.google.com</strong> con su cuenta de Gmail</li>
-                    <li>2. En el panel izquierdo, hacer click en los <strong>3 puntos</strong> junto a su calendario → "Configuración y compartir"</li>
-                    <li>3. Ir a "Compartir con personas o grupos" → "Agregar personas"</li>
-                    <li>4. Pegar: <code className="rounded bg-white px-1 py-0.5 text-[10px] font-mono text-grape">conalma-calendar@conalma-502822.iam.gserviceaccount.com</code></li>
-                    <li>5. Permiso: <strong>"Hacer cambios en eventos"</strong> → Enviar</li>
+                    <li>1. Abrir <strong>calendar.google.com</strong> con el Gmail que registró arriba</li>
+                    <li>2. En el panel izquierdo, pasar el mouse sobre su nombre de calendario → click en <strong>⋮</strong> (3 puntos)</li>
+                    <li>3. Click en <strong>"Config. y uso compartido"</strong></li>
+                    <li>4. Click en <strong>"Se compartió con"</strong> (menú izquierdo)</li>
+                    <li>5. Click en <strong>"+ Agregar personas y grupos"</strong></li>
+                    <li>6. Pegar: <code className="rounded bg-white px-1 py-0.5 text-[10px] font-mono text-grape">conalma-calendar@conalma-502822.iam.gserviceaccount.com</code></li>
+                    <li>7. Permisos: <strong>"Realizar cambios en los eventos"</strong></li>
+                    <li>8. Click en <strong>"Enviar"</strong></li>
                   </ol>
                   <p className="mt-2 text-[10px] text-muted-foreground italic">
-                    Solo se hace una vez. Los links de Google Meet se generan automáticamente.
+                    ✅ Después de esto, cada cita confirmada generará automáticamente un link de Google Meet.
                   </p>
                 </div>
 
