@@ -2,23 +2,31 @@
 
 import { signIn } from '@/lib/auth';
 import { AuthError } from 'next-auth';
-import { isRedirectError } from 'next/dist/client/components/redirect-error';
+import { redirect } from 'next/navigation';
 
 export async function loginAction(formData: FormData) {
+  let success = false;
+
   try {
     await signIn('credentials', {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
-      redirectTo: '/admin',
+      redirect: false,
     });
+    success = true;
   } catch (error) {
-    // NextAuth throws a NEXT_REDIRECT "error" on successful login — re-throw it
-    if (isRedirectError(error)) {
-      throw error;
-    }
     if (error instanceof AuthError) {
       return { error: 'Credenciales incorrectas. Verifica tu email y contraseña.' };
     }
-    throw error;
+    // Check if it's a redirect (NextAuth sometimes throws these)
+    if ((error as { digest?: string })?.digest?.startsWith('NEXT_REDIRECT')) {
+      success = true;
+    } else {
+      return { error: 'Error inesperado. Intenta de nuevo.' };
+    }
+  }
+
+  if (success) {
+    redirect('/admin');
   }
 }
