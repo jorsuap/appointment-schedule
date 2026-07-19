@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name, email, specialty and services are required' }, { status: 400 });
     }
 
-    // Create professional
+    // Create professional (email is also used as calendarId for Google Meet)
     const professional = await prisma.professional.create({
       data: {
         name,
@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
         specialty,
         description: description || null,
         traits: traits || [],
+        calendarId: email,
       },
     });
 

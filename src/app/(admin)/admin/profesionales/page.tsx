@@ -204,14 +204,34 @@ export default function ProfesionalesPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Correo electrónico *</Label>
+                  <Label className="text-sm">Correo electrónico (Gmail) *</Label>
                   <Input
                     type="email"
                     className="mt-1 h-11 text-base"
-                    placeholder="email@conalma.co"
+                    placeholder="nombre@gmail.com"
                     value={newPro.email}
                     onChange={(e) => setNewPro({ ...newPro, email: e.target.value })}
                   />
+                  {newPro.email && !newPro.email.endsWith('@gmail.com') && (
+                    <p className="mt-1 text-xs text-red-500">
+                      Debe ser una cuenta de Gmail para generar los links de videollamada
+                    </p>
+                  )}
+                </div>
+
+                {/* Google Calendar instructions */}
+                <div className="rounded-xl border border-plum/30 bg-secondary/20 p-4">
+                  <p className="text-xs font-semibold text-grape">📋 Instrucciones para el profesional:</p>
+                  <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
+                    <li>1. Abrir <strong>calendar.google.com</strong> con su cuenta de Gmail</li>
+                    <li>2. En el panel izquierdo, hacer click en los <strong>3 puntos</strong> junto a su calendario → "Configuración y compartir"</li>
+                    <li>3. Ir a "Compartir con personas o grupos" → "Agregar personas"</li>
+                    <li>4. Pegar: <code className="rounded bg-white px-1 py-0.5 text-[10px] font-mono text-grape">conalma-calendar@conalma-502822.iam.gserviceaccount.com</code></li>
+                    <li>5. Permiso: <strong>"Hacer cambios en eventos"</strong> → Enviar</li>
+                  </ol>
+                  <p className="mt-2 text-[10px] text-muted-foreground italic">
+                    Solo se hace una vez. Los links de Google Meet se generan automáticamente.
+                  </p>
                 </div>
 
                 <div>
