@@ -43,8 +43,7 @@ export async function createCalendarEvent(params: CreateEventParams) {
 
   const event = await calendar.events.insert({
     calendarId,
-    conferenceDataVersion: 1, // Required to create Meet link
-    sendUpdates: 'all', // Send email invitations to attendees
+    conferenceDataVersion: 1,
     requestBody: {
       summary,
       description,
@@ -56,7 +55,6 @@ export async function createCalendarEvent(params: CreateEventParams) {
         dateTime: endDateTime,
         timeZone,
       },
-      attendees: [{ email: attendeeEmail }],
       conferenceData: {
         createRequest: {
           requestId: `conalma-${Date.now()}`,
@@ -66,8 +64,8 @@ export async function createCalendarEvent(params: CreateEventParams) {
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'email', minutes: 60 }, // 1 hour before
-          { method: 'popup', minutes: 15 }, // 15 min before
+          { method: 'email', minutes: 60 },
+          { method: 'popup', minutes: 15 },
         ],
       },
     },
