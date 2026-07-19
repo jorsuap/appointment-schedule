@@ -1,42 +1,39 @@
 import { CalendarDays, Users, Clock, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { prisma } from '@/lib/prisma';
 
-// TODO: Fetch real stats from database
-const stats = [
-  { label: 'Citas hoy', value: '3', icon: CalendarDays, color: 'text-grape' },
-  { label: 'Pacientes totales', value: '24', icon: Users, color: 'text-plum' },
-  { label: 'Próxima cita', value: '10:00 AM', icon: Clock, color: 'text-grape' },
-  { label: 'Ingresos mes', value: '$960.000', icon: DollarSign, color: 'text-green-600' },
-];
+export const dynamic = 'force-dynamic';
 
-const upcomingAppointments = [
-  {
-    id: '1',
-    patient: 'María González',
-    professional: 'Alejandra Moreno',
-    service: 'Acompañamiento emocional',
-    date: '2026-07-14',
-    time: '09:00',
-  },
-  {
-    id: '2',
-    patient: 'Carlos Ruiz',
-    professional: 'Carolina Jiménez',
-    service: 'Acompañamiento maternidad posparto',
-    date: '2026-07-14',
-    time: '10:00',
-  },
-  {
-    id: '3',
-    patient: 'Ana Martínez',
-    professional: 'Alejandra Moreno',
-    service: 'Acompañamiento emocional',
-    date: '2026-07-14',
-    time: '14:00',
-  },
-];
+export default async function AdminDashboardPage() {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
-export default function AdminDashboardPage() {
+  const [todayAppointments, totalPatients, totalRevenue, upcomingAppointments] = await Promise.all([
+    prisma.appointment.count({
+      where: { date: { gte: startOfDay, lt: endOfDay }, status: 'CONFIRMED' },
+    }),
+    prisma.patient.count(),
+    prisma.payment.aggregate({
+      where: { status: 'APPROVED' },
+      _sum: { amount: true },
+    }),
+    prisma.appointment.findMany({
+      where: { date: { gte: now }, status: 'CONFIRMED' },
+      include: { patient: true, professional: true, service: true },
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+      take: 10,
+    }),
+  ]);
+
+  const stats = [
+    { label: 'Citas hoy', value: String(todayAppointments), icon: CalendarDays, color: 'text-grape' },
+    { label: 'Pacientes totales', value: String(totalPatients), icon: Users, color: 'text-plum' },
+    { label: 'Próximas citas', value: String(upcomingAppointments.length), icon: Clock, color: 'text-grape' },
+    { label: 'Ingresos totales', value: `$${(totalRevenue._sum.amount || 0).toLocaleString('es-CO')}`, icon: DollarSign, color: 'text-green-600' },
+  ];
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-grape sm:text-3xl">Dashboard</h1>
@@ -65,24 +62,31 @@ export default function AdminDashboardPage() {
           <CardTitle className="text-lg text-grape">Próximas citas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {upcomingAppointments.map((apt) => (
-              <div
-                key={apt.id}
-                className="flex flex-col gap-1 rounded-lg border border-border/40 p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-sm font-medium text-grape">{apt.patient}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {apt.service} • {apt.professional}
-                  </p>
+          {upcomingAppointments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay citas próximas programadas.</p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingAppointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="flex flex-col gap-1 rounded-lg border border-border/40 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-grape">{apt.patient.fullName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {apt.service.name} • {apt.professional.name}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {apt.date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+                    </Badge>
+                    <span className="text-sm font-medium text-plum">{apt.startTime} hrs</span>
+                  </div>
                 </div>
-                <div className="text-sm font-medium text-plum">
-                  {apt.time} hrs
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
