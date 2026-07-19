@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { loginAction } from './actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,13 +19,17 @@ export default function LoginPage() {
     setIsPending(true);
 
     const formData = new FormData(e.currentTarget);
-    const result = await loginAction(formData);
+
+    const result = await signIn('credentials', {
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
+      redirect: false,
+    });
 
     if (result?.error) {
-      setError(result.error);
+      setError('Credenciales incorrectas. Verifica tu email y contraseña.');
       setIsPending(false);
-    } else if (result?.success) {
-      // Force client-side navigation to admin
+    } else if (result?.ok) {
       router.push('/admin');
       router.refresh();
     }
