@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +9,27 @@ import { Label } from '@/components/ui/label';
 import { loginAction } from './actions';
 
 export default function LoginPage() {
-  const [state, formAction, isPending] = useActionState(
-    async (_prevState: { error: string } | null, formData: FormData) => {
-      const result = await loginAction(formData);
-      return result ?? null;
-    },
-    null,
-  );
+  const router = useRouter();
+  const [error, setError] = useState('');
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError('');
+    setIsPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await loginAction(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      setIsPending(false);
+    } else if (result?.success) {
+      // Force client-side navigation to admin
+      router.push('/admin');
+      router.refresh();
+    }
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-lilac px-4">
@@ -24,9 +39,9 @@ export default function LoginPage() {
           <CardTitle className="mt-2 text-lg text-grape">Panel de administración</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-4">
-            {state?.error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{state.error}</div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
             )}
 
             <div>
