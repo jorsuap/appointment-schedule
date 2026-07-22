@@ -1,9 +1,10 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 
 type ProfessionalSessionSuccess = {
   error: null;
-  session: NonNullable<Awaited<ReturnType<typeof auth>>>;
+  session: Session;
   professionalId: string;
 };
 
@@ -16,7 +17,7 @@ type ProfessionalSessionError = {
 type ProfessionalSessionResult = ProfessionalSessionSuccess | ProfessionalSessionError;
 
 export async function getProfessionalSession(): Promise<ProfessionalSessionResult> {
-  const session = await auth();
+  const session = await auth() as Session | null;
 
   if (!session?.user) {
     return {
