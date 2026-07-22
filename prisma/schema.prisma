@@ -36,13 +36,16 @@ enum PaymentStatus {
 // ============================================
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  passwordHash String?
-  role         UserRole @default(ADMIN)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  name               String?
+  passwordHash       String?
+  role               UserRole @default(ADMIN)
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  professional Professional?
 
   @@map("users")
 }
@@ -94,6 +97,7 @@ model Service {
 
 model Professional {
   id          String   @id @default(cuid())
+  userId      String?  @unique
   name        String
   email       String   @unique
   specialty   String
@@ -102,14 +106,22 @@ model Professional {
   traits      String[] @default([])
   isActive    Boolean  @default(true)
   calendarId  String?
+
+  // OAuth Google Calendar
+  googleRefreshToken       String?
+  googleEmail              String?
+  googleTokenExpiresAt     DateTime?
+  googleCalendarConnected  Boolean  @default(false)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  services     ProfessionalService[]
+  user           User?                @relation(fields: [userId], references: [id])
+  services       ProfessionalService[]
   availabilities Availability[]
-  blockedDates BlockedDate[]
-  appointments Appointment[]
-  tariffs      ProfessionalTariff[]
+  blockedDates   BlockedDate[]
+  appointments   Appointment[]
+  tariffs        ProfessionalTariff[]
 
   @@map("professionals")
 }
@@ -266,6 +278,7 @@ model ProgressNote {
   id            String   @id @default(cuid())
   appointmentId String?
   patientId     String
+  authorId      String?
   content       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

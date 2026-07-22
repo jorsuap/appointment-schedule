@@ -29,8 +29,20 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Credenciales incorrectas. Verifica tu email y contraseña.');
       setIsPending(false);
-    } else if (result?.ok) {
-      router.push('/admin');
+      return;
+    }
+
+    if (result?.ok) {
+      // Fetch session to determine role-based redirect
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      const role = session?.user?.role;
+
+      if (role === 'PROFESSIONAL') {
+        router.push('/profesional');
+      } else {
+        router.push('/admin');
+      }
       router.refresh();
     }
   }
@@ -40,7 +52,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm border-border/40">
         <CardHeader className="text-center">
           <span className="text-2xl font-bold text-grape">conAlma</span>
-          <CardTitle className="mt-2 text-lg text-grape">Panel de administración</CardTitle>
+          <CardTitle className="mt-2 text-lg text-grape">Acceso al portal</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -53,7 +65,7 @@ export default function LoginPage() {
               <Input
                 name="email"
                 type="email"
-                placeholder="admin@conalma.co"
+                placeholder="tu@email.com"
                 className="mt-1 h-11 text-base"
                 required
               />

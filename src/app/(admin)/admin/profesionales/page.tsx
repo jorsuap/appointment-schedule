@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, ChevronRight, ToggleRight, X } from 'lucide-react';
+import { Plus, ChevronRight, ToggleRight, X, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,9 @@ export default function ProfesionalesPage() {
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [tempPasswordResult, setTempPasswordResult] = useState<{ name: string; email: string; tempPassword: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [newPro, setNewPro] = useState({
     name: '',
     email: '',
@@ -93,12 +96,38 @@ export default function ProfesionalesPage() {
         return;
       }
 
+      const data = await res.json();
+
+      // Show temp password dialog (shown once, never stored)
+      setTempPasswordResult({
+        name: newPro.name,
+        email: newPro.email,
+        tempPassword: data.tempPassword,
+      });
+
       setShowModal(false);
       setNewPro({ name: '', email: '', specialty: '', description: '', price: '', commission: '', traits: [], services: [] });
-      window.location.reload();
+
+      // Refresh professionals list
+      const pros = await fetch('/api/professionals').then((r) => r.json());
+      setProfessionals(pros);
     } catch {
       alert('Error de conexión');
     }
+  }
+
+  function handleCopyPassword() {
+    if (tempPasswordResult) {
+      navigator.clipboard.writeText(tempPasswordResult.tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
+  function handleCloseTempPassword() {
+    setTempPasswordResult(null);
+    setCopied(false);
+    setShowPassword(false);
   }
 
   if (loading) {
@@ -350,6 +379,75 @@ export default function ProfesionalesPage() {
                 disabled={!newPro.name || !newPro.email || !newPro.specialty || !newPro.price || !newPro.commission || newPro.services.length === 0}
               >
                 Guardar profesional
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Contraseña temporal generada */}
+      {tempPasswordResult && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-10 sm:items-center sm:pt-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-white shadow-lg">
+            <div className="border-b border-border/40 px-5 py-4">
+              <h2 className="text-lg font-bold text-grape">✅ Profesional creado</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Se generó una contraseña temporal para el primer inicio de sesión.
+              </p>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              <div className="rounded-lg bg-secondary/50 p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-grape">Profesional:</span> {tempPasswordResult.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-grape">Email:</span> {tempPasswordResult.email}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-grape">Contraseña temporal</Label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      readOnly
+                      value={tempPasswordResult.tempPassword}
+                      type={showPassword ? 'text' : 'password'}
+                      className="h-11 pr-10 font-mono text-base"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 shrink-0"
+                    onClick={handleCopyPassword}
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-jasmine/50 bg-jasmine/10 p-3">
+                <p className="text-xs font-semibold text-grape">⚠️ Importante</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Esta contraseña se muestra <strong>una sola vez</strong>. Cópiala y compártela con el profesional
+                  por un canal seguro (WhatsApp, llamada). Al iniciar sesión por primera vez, se le pedirá cambiarla.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end border-t border-border/40 px-5 py-4">
+              <Button onClick={handleCloseTempPassword}>
+                Entendido, cerrar
               </Button>
             </div>
           </div>

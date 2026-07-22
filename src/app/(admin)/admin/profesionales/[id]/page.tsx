@@ -1,14 +1,12 @@
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Video, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Video, CalendarCheck, CalendarX } from 'lucide-react';
 import { LinkButton } from '@/components/ui/link-button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { prisma } from '@/lib/prisma';
-import { AddAvailabilityForm } from './add-availability-form';
+import { DeleteProfessionalButton } from './delete-professional-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,23 +49,29 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
       </LinkButton>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Avatar className="h-16 w-16">
-          <AvatarFallback className="bg-plum/20 text-lg font-semibold text-grape">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-2xl font-bold text-grape">{professional.name}</h1>
-          <p className="text-sm text-muted-foreground">{professional.specialty} • {professional.email}</p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {professional.traits.map((t) => (
-              <span key={t} className="rounded-full bg-jasmine/30 px-2 py-0.5 text-xs font-medium text-grape">
-                {t}
-              </span>
-            ))}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Avatar className="h-16 w-16">
+            <AvatarFallback className="bg-plum/20 text-lg font-semibold text-grape">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-2xl font-bold text-grape">{professional.name}</h1>
+            <p className="text-sm text-muted-foreground">{professional.specialty} • {professional.email}</p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {professional.traits.map((t) => (
+                <span key={t} className="rounded-full bg-jasmine/30 px-2 py-0.5 text-xs font-medium text-grape">
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
+        <DeleteProfessionalButton
+          professionalId={professional.id}
+          professionalName={professional.name}
+        />
       </div>
 
       {/* Tabs */}
@@ -113,19 +117,46 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
 
         {/* DISPONIBILIDAD */}
         <TabsContent value="disponibilidad" className="mt-4 space-y-6">
+          {/* Estado Google Calendar */}
           <Card className="border-border/40">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base text-grape">Horario semanal</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-grape">Google Calendar</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <AddAvailabilityForm professionalId={professional.id} />
+            <CardContent>
+              {professional.googleCalendarConnected ? (
+                <div className="flex items-center gap-2">
+                  <CalendarCheck className="h-4 w-4 text-green-600" />
+                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    Google Calendar conectado
+                  </Badge>
+                  {professional.googleEmail && (
+                    <span className="text-sm text-muted-foreground">{professional.googleEmail}</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <CalendarX className="h-4 w-4 text-muted-foreground" />
+                  <Badge variant="secondary" className="text-muted-foreground">
+                    Google Calendar no conectado
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Horario semanal (solo lectura) */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-grape">Horario semanal</CardTitle>
+              <p className="text-xs text-muted-foreground">El profesional gestiona su propia disponibilidad</p>
+            </CardHeader>
+            <CardContent>
               {professional.availabilities.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No hay horarios configurados.</p>
               ) : (
                 <div className="space-y-2">
                   {professional.availabilities.map((slot) => (
-                    <div key={slot.id} className="flex items-center justify-between rounded-lg border border-border/40 px-3 py-2">
+                    <div key={slot.id} className="flex items-center rounded-lg border border-border/40 px-3 py-2">
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">{days[slot.dayOfWeek]}</Badge>
                         <span className="text-sm font-medium">{slot.startTime} - {slot.endTime}</span>
