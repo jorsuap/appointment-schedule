@@ -72,8 +72,7 @@ export function ChangePasswordModal() {
       setSuccess(true);
       toast.success('Contraseña actualizada correctamente');
 
-      // Update session and force full page reload to re-evaluate server layout
-      await update();
+      // Force full page reload — layout will re-read mustChangePassword from DB
       window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
