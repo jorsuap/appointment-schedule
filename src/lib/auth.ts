@@ -34,7 +34,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as { role: string }).role;
         token.mustChangePassword = (user as { mustChangePassword: boolean }).mustChangePassword;
@@ -50,6 +50,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
       }
+
+      // Re-fetch mustChangePassword from DB when session is updated (after password change)
+      if (trigger === 'update' && token.sub) {
+        const freshUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { mustChangePassword: true },
+        });
+        if (freshUser) {
+          token.mustChangePassword = freshUser.mustChangePassword;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
