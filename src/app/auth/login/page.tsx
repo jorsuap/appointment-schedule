@@ -61,11 +61,11 @@ export default function LoginPage() {
             )}
 
             <div>
-              <Label className="text-sm">Correo electrónico</Label>
+              <Label className="text-sm">Usuario o correo electrónico</Label>
               <Input
                 name="email"
-                type="email"
-                placeholder="tu@email.com"
+                type="text"
+                placeholder="tu usuario o email"
                 className="mt-1 h-11 text-base"
                 required
               />
