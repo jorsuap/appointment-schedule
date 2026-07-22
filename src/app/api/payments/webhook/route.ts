@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getTransactionStatus } from '@/lib/wompi';
 import { sendAppointmentConfirmation } from '@/lib/emails/send-confirmation';
+import { decrypt } from '@/lib/encryption';
+import {
+  refreshAccessToken,
+  createCalendarEvent as createCalendarEventOAuth,
+} from '@/lib/google-oauth';
 
 // POST /api/payments/webhook — Receive Wompi payment events
 export async function POST(request: NextRequest) {
@@ -75,33 +80,67 @@ export async function POST(request: NextRequest) {
       });
 
       const appointment = payment.appointment;
+      const professional = appointment.professional;
 
-      // Create Google Calendar event + Meet link (async)
+      // Create Google Calendar event + Meet link (fire-and-forget, Req 6.6)
       try {
-        const calendarId = appointment.professional.calendarId || appointment.professional.email;
         const dateStr2 = appointment.date.toISOString().split('T')[0];
         const startDateTime = `${dateStr2}T${appointment.startTime}:00`;
         const endDateTime = `${dateStr2}T${appointment.endTime}:00`;
 
-        const { createCalendarEvent } = await import('@/lib/google-calendar');
-        const { eventId, meetLink } = await createCalendarEvent({
-          calendarId,
-          summary: `conAlma — ${appointment.service.name}`,
-          description: `Sesión con ${appointment.patient.preferredName || appointment.patient.fullName}.\nDuración: ${appointment.service.durationMin} min`,
-          startDateTime,
-          endDateTime,
-          attendeeEmail: appointment.patient.email,
-        });
+        const eventSummary = `conAlma — ${appointment.service.name}`;
+        const eventDescription = `Sesión con ${appointment.patient.preferredName || appointment.patient.fullName}.\nDuración: ${appointment.service.durationMin} min`;
 
-        if (eventId || meetLink) {
-          await prisma.appointment.update({
-            where: { id: payment.appointmentId },
-            data: { googleEventId: eventId, meetLink },
+        if (professional.googleCalendarConnected && professional.googleRefreshToken) {
+          // ─── OAuth flow: use professional's own Google Calendar (Req 6.1, 6.3) ───
+          const decryptedRefreshToken = decrypt(professional.googleRefreshToken);
+          const { accessToken } = await refreshAccessToken(decryptedRefreshToken);
+
+          const result = await createCalendarEventOAuth({
+            accessToken,
+            summary: eventSummary,
+            description: eventDescription,
+            startDateTime,
+            endDateTime,
+            attendeeEmail: appointment.patient.email,
           });
+
+          if (result) {
+            await prisma.appointment.update({
+              where: { id: payment.appointmentId },
+              data: { googleEventId: result.eventId, meetLink: result.meetLink },
+            });
+            console.log(
+              `[Webhook] Calendar event created via OAuth for appointment ${payment.appointmentId}`,
+            );
+          } else {
+            console.warn(
+              `[Webhook] OAuth calendar event returned null for appointment ${payment.appointmentId}`,
+            );
+          }
+        } else if (professional.calendarId) {
+          // ─── Fallback: Service Account flow (legacy, when no OAuth connected) ───
+          const { createCalendarEvent } = await import('@/lib/google-calendar');
+          const { eventId, meetLink } = await createCalendarEvent({
+            calendarId: professional.calendarId,
+            summary: eventSummary,
+            description: eventDescription,
+            startDateTime,
+            endDateTime,
+            attendeeEmail: appointment.patient.email,
+          });
+
+          if (eventId || meetLink) {
+            await prisma.appointment.update({
+              where: { id: payment.appointmentId },
+              data: { googleEventId: eventId, meetLink },
+            });
+          }
         }
+        // If neither OAuth nor calendarId configured: no event created (Req 6.7)
       } catch (calErr) {
         console.error('[Webhook] Calendar event creation failed:', calErr);
-        // Don't block — appointment is still confirmed
+        // Don't block — appointment is still confirmed (Req 6.6)
       }
 
       // Re-fetch appointment to get meetLink

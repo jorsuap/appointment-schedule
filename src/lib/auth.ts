@@ -28,6 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -36,13 +37,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role: string }).role;
+        token.mustChangePassword = (user as { mustChangePassword: boolean }).mustChangePassword;
+
+        // If user is PROFESSIONAL, fetch their Professional record to get professionalId
+        if ((user as { role: string }).role === 'PROFESSIONAL') {
+          const professional = await prisma.professional.findUnique({
+            where: { userId: user.id! },
+            select: { id: true },
+          });
+          if (professional) {
+            token.professionalId = professional.id;
+          }
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
-        (session.user as { role: string }).role = token.role as string;
+        session.user.role = token.role as string | undefined;
+        session.user.professionalId = token.professionalId as string | undefined;
+        session.user.mustChangePassword = token.mustChangePassword as boolean | undefined;
       }
       return session;
     },
