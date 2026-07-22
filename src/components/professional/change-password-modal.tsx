@@ -42,6 +42,7 @@ export function ChangePasswordModal() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const form = useForm<ChangePasswordInput>({
     resolver: zodResolver(changePasswordSchema),
@@ -68,10 +69,12 @@ export function ChangePasswordModal() {
         throw new Error(data.error || 'Error al cambiar la contraseña');
       }
 
-      // Refresh session to update mustChangePassword flag
-      await update();
+      setSuccess(true);
       toast.success('Contraseña actualizada correctamente');
-      router.refresh();
+
+      // Update session and force full page reload to re-evaluate server layout
+      await update();
+      window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
@@ -103,6 +106,11 @@ export function ChangePasswordModal() {
           </div>
         )}
 
+        {success ? (
+          <div className="py-6 text-center">
+            <p className="text-sm text-muted-foreground">Contraseña actualizada. Recargando...</p>
+          </div>
+        ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -171,6 +179,7 @@ export function ChangePasswordModal() {
             </Button>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
