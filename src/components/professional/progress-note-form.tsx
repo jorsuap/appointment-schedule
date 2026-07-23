@@ -112,7 +112,7 @@ export function ProgressNoteForm({
               <FormControl>
                 <Textarea
                   placeholder="Escribe la nota de progreso del paciente..."
-                  className="min-h-[120px] resize-y text-base"
+                  className="min-h-[120px] resize-y bg-white text-base"
                   {...field}
                 />
               </FormControl>
@@ -140,11 +140,11 @@ export function ProgressNoteForm({
                 onValueChange={(v) => field.onChange(v || undefined)}
               >
                 <FormControl>
-                  <SelectTrigger className="h-11 text-base">
+                  <SelectTrigger className="h-11 w-full bg-white text-base">
                     <SelectValue placeholder="Seleccionar cita..." />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="w-[var(--radix-select-trigger-width)]">
                   {appointments.map((apt) => (
                     <SelectItem key={apt.id} value={apt.id}>
                       {formatDate(apt.date)} — {apt.serviceName}

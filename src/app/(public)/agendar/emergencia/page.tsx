@@ -109,7 +109,7 @@ export default function EmergenciaPage() {
                 <FormControl>
                   <Input
                     placeholder="Nombre del contacto"
-                    className="h-12 text-base"
+                    className="h-12 bg-white text-base"
                     {...field}
                   />
                 </FormControl>
@@ -126,11 +126,11 @@ export default function EmergenciaPage() {
                 <FormLabel>Relación *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 bg-white text-base">
                       <SelectValue placeholder="¿Qué relación tienen?" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
                     {relations.map((r) => (
                       <SelectItem key={r} value={r} className="text-base">
                         {r}
@@ -155,7 +155,7 @@ export default function EmergenciaPage() {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     placeholder="Número de teléfono"
-                    className="h-12 text-base"
+                    className="h-12 bg-white text-base"
                     {...field}
                     onChange={(e) => {
                       // Only allow digits

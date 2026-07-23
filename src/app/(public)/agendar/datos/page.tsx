@@ -117,7 +117,7 @@ export default function DatosPage() {
               <FormItem>
                 <FormLabel>Nombre completo *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Tu nombre completo" className="h-12 text-base" {...field} />
+                  <Input placeholder="Tu nombre completo" className="h-12 bg-white text-base" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -133,7 +133,7 @@ export default function DatosPage() {
                 <FormControl>
                   <Input
                     placeholder="Nombre o apodo preferido"
-                    className="h-12 text-base"
+                    className="h-12 bg-white text-base"
                     {...field}
                   />
                 </FormControl>
@@ -170,7 +170,7 @@ export default function DatosPage() {
                   <Input
                     type="email"
                     placeholder="tu@correo.com"
-                    className="h-12 text-base"
+                    className="h-12 bg-white text-base"
                     {...field}
                   />
                 </FormControl>
@@ -207,11 +207,11 @@ export default function DatosPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 bg-white text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="si" className="text-base">
                       Sí
                     </SelectItem>

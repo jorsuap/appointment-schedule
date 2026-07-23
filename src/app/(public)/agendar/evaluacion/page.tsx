@@ -148,11 +148,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 bg-white text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="no" className="text-base">
                       No
                     </SelectItem>
@@ -177,11 +177,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 bg-white text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
                     <SelectItem value="no" className="text-base">
                       No
                     </SelectItem>
@@ -226,11 +226,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 bg-white text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="max-w-[calc(100vw-2rem)]">
+                  <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                     {desiredOutcomeOptions.map((option) => (
                       <SelectItem
                         key={option}
