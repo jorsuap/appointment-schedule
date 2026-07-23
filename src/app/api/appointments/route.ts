@@ -69,9 +69,27 @@ export async function POST(request: NextRequest) {
 
     // Create patient and appointment in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create or find patient
-      const patient = await tx.patient.create({
-        data: {
+      // Upsert patient by email — avoids duplicates when same patient books again
+      const patient = await tx.patient.upsert({
+        where: { email },
+        update: {
+          fullName,
+          preferredName,
+          country,
+          isAdult: isAdult === 'si',
+          reasonForVisit,
+          recentFeelings,
+          selfHarmRisk: selfHarmRisk === 'si',
+          currentTreatment: currentTreatment === 'si',
+          previousDiagnosis,
+          desiredOutcome,
+          additionalNotes,
+          emergencyName,
+          emergencyRelation,
+          emergencyPhone,
+          emergencyCountry,
+        },
+        create: {
           fullName,
           preferredName,
           dateOfBirth: new Date(dateOfBirth),

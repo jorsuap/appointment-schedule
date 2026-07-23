@@ -186,7 +186,7 @@ model Patient {
   id              String   @id @default(cuid())
   fullName        String
   preferredName   String?
-  email           String
+  email           String   @unique
   dateOfBirth     DateTime
   country         String
   isAdult         Boolean  @default(true)
