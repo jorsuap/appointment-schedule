@@ -124,8 +124,8 @@ export function CalendarView() {
   function getAppointmentsForDay(day: number): CalendarAppointment[] {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return appointments.filter((a) => {
-      const apptDate = new Date(a.date);
-      const apptDateStr = `${apptDate.getFullYear()}-${String(apptDate.getMonth() + 1).padStart(2, '0')}-${String(apptDate.getDate()).padStart(2, '0')}`;
+      // Extract YYYY-MM-DD directly from ISO string to avoid timezone conversion
+      const apptDateStr = a.date.split('T')[0];
       return apptDateStr === dateStr;
     });
   }
