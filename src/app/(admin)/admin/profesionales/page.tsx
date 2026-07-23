@@ -250,22 +250,17 @@ export default function ProfesionalesPage() {
 
                 {/* Google Calendar instructions */}
                 <div className="rounded-xl border border-plum/30 bg-secondary/20 p-4">
-                  <p className="text-xs font-semibold text-grape">📋 Para activar videollamadas automáticas:</p>
+                  <p className="text-xs font-semibold text-grape">📅 Videollamadas automáticas con Google Meet:</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    El profesional debe compartir su Google Calendar con conAlma. Solo se hace una vez:
+                    El profesional puede conectar su Google Calendar desde su portal. No requiere configuración manual.
                   </p>
                   <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-                    <li>1. Abrir <strong>calendar.google.com</strong> con el Gmail que registró arriba</li>
-                    <li>2. En el panel izquierdo, pasar el mouse sobre su nombre de calendario → click en <strong>⋮</strong> (3 puntos)</li>
-                    <li>3. Click en <strong>"Config. y uso compartido"</strong></li>
-                    <li>4. Click en <strong>"Se compartió con"</strong> (menú izquierdo)</li>
-                    <li>5. Click en <strong>"+ Agregar personas y grupos"</strong></li>
-                    <li>6. Pegar: <code className="rounded bg-white px-1 py-0.5 text-[10px] font-mono text-grape">conalma-calendar@conalma-502822.iam.gserviceaccount.com</code></li>
-                    <li>7. Permisos: <strong>"Realizar cambios en los eventos"</strong></li>
-                    <li>8. Click en <strong>"Enviar"</strong></li>
+                    <li>1. El profesional inicia sesión en su portal con la contraseña temporal</li>
+                    <li>2. Va a <strong>Disponibilidad</strong> → click en <strong>"Conectar Google Calendar"</strong></li>
+                    <li>3. Autoriza permisos con su cuenta de Google</li>
                   </ol>
                   <p className="mt-2 text-[10px] text-muted-foreground italic">
-                    ✅ Después de esto, cada cita confirmada generará automáticamente un link de Google Meet.
+                    ✅ Después de conectar, cada cita confirmada generará automáticamente un evento con link de Google Meet.
                   </p>
                 </div>
 
