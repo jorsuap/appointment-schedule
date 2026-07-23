@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getTransactionStatus } from '@/lib/wompi';
 import { sendAppointmentConfirmation } from '@/lib/emails/send-confirmation';
+import { sendProfessionalNotification } from '@/lib/emails/send-professional-notification';
 import { decrypt } from '@/lib/encryption';
 import {
   refreshAccessToken,
@@ -165,9 +166,21 @@ export async function POST(request: NextRequest) {
         time: appointment.startTime,
         duration: appointment.service.durationMin,
         meetLink: updatedAppointment?.meetLink || null,
-      }).catch((err) => console.error('[Webhook] Email send failed:', err));
+      }).catch((err) => console.error('[Webhook] Patient email send failed:', err));
 
-      console.log(`[Webhook] Appointment ${payment.appointmentId} confirmed, email queued`);
+      // Notify the professional about the new appointment
+      sendProfessionalNotification({
+        to: appointment.professional.email,
+        professionalName: appointment.professional.name,
+        patientName: appointment.patient.preferredName || appointment.patient.fullName,
+        serviceName: appointment.service.name,
+        date: dateStr,
+        time: appointment.startTime,
+        duration: appointment.service.durationMin,
+        meetLink: updatedAppointment?.meetLink || null,
+      }).catch((err) => console.error('[Webhook] Professional email send failed:', err));
+
+      console.log(`[Webhook] Appointment ${payment.appointmentId} confirmed, emails queued`);
     } else {
       console.log(`[Webhook] Payment ${reference} status: ${newPaymentStatus}`);
     }
