@@ -148,11 +148,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 bg-white text-base">
+                    <SelectTrigger className="text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                  <SelectContent>
                     <SelectItem value="no" className="text-base">
                       No
                     </SelectItem>
@@ -177,11 +177,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 bg-white text-base">
+                    <SelectTrigger className="text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                  <SelectContent>
                     <SelectItem value="no" className="text-base">
                       No
                     </SelectItem>
@@ -226,11 +226,11 @@ export default function EvaluacionPage() {
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 bg-white text-base">
+                    <SelectTrigger className="text-base">
                       <SelectValue placeholder="Selecciona una opción" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
+                  <SelectContent>
                     {desiredOutcomeOptions.map((option) => (
                       <SelectItem
                         key={option}

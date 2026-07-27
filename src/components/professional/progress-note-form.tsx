@@ -140,11 +140,11 @@ export function ProgressNoteForm({
                 onValueChange={(v) => field.onChange(v || undefined)}
               >
                 <FormControl>
-                  <SelectTrigger className="h-11 w-full bg-white text-base">
+                  <SelectTrigger className="text-base">
                     <SelectValue placeholder="Seleccionar cita..." />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                <SelectContent>
                   {appointments.map((apt) => (
                     <SelectItem key={apt.id} value={apt.id}>
                       {formatDate(apt.date)} — {apt.serviceName}

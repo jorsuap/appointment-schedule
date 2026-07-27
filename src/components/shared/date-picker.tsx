@@ -32,7 +32,7 @@ export function DatePicker({
         type="button"
         variant="outline"
         className={cn(
-          'h-12 w-full justify-start text-left text-base font-normal',
+          'h-10 w-full justify-start bg-white text-left text-base font-normal',
           !value && 'text-muted-foreground',
         )}
         onClick={() => setOpen(!open)}
