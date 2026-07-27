@@ -35,7 +35,10 @@ export function AdminSidebar() {
     <>
       {/* Mobile top bar */}
       <div className="flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 lg:hidden">
-        <span className="text-lg font-bold text-sidebar-foreground">conAlma</span>
+        <span className="flex items-center gap-2 text-lg font-bold text-sidebar-foreground">
+          <img src="/logo-conalma.png" alt="conAlma" className="h-6 w-6" />
+          conAlma
+        </span>
         <Button
           variant="ghost"
           size="icon"
@@ -54,11 +57,12 @@ export function AdminSidebar() {
         )}
       >
         {/* Logo */}
-        <div className="hidden h-16 items-center px-6 lg:flex">
-          <Link href="/admin" className="text-xl font-bold text-sidebar-foreground">
-            conAlma
+        <div className="hidden h-16 items-center gap-2 px-6 lg:flex">
+          <Link href="/admin" className="flex items-center gap-2">
+            <img src="/logo-conalma.png" alt="conAlma" className="h-8 w-8" />
+            <span className="text-xl font-bold text-sidebar-foreground">conAlma</span>
           </Link>
-          <span className="ml-2 rounded bg-sidebar-primary px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary-foreground">
+          <span className="rounded bg-sidebar-primary px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary-foreground">
             Admin
           </span>
         </div>

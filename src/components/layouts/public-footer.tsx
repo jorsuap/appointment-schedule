@@ -6,7 +6,10 @@ export function PublicFooter() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
           <div>
-            <span className="text-xl font-bold text-grape">conAlma</span>
+            <span className="flex items-center gap-2 text-xl font-bold text-grape">
+              <img src="/logo-conalma.png" alt="conAlma" className="h-8 w-8" />
+              conAlma
+            </span>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Tu refugio seguro para el bienestar psicológico y emocional.
             </p>
