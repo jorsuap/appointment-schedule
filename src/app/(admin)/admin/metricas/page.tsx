@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { TrendingUp, DollarSign, Users, Calendar as CalendarIcon, CalendarDays } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useCallback, useEffect, useState } from 'react';
+import { TrendingUp, DollarSign, Users, Calendar as CalendarIcon, CalendarDays, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
   SelectContent,
@@ -16,60 +11,97 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-// TODO: Fetch from database with real calculations
-const metricsByProfessional = {
-  all: {
-    totalSessions: 30,
-    totalRevenue: 2400000,
-    totalCommission: 960000,
-    totalPayout: 1440000,
-  },
-  '1': {
-    totalSessions: 18,
-    totalRevenue: 1440000,
-    totalCommission: 576000,
-    totalPayout: 864000,
-  },
-  '2': {
-    totalSessions: 12,
-    totalRevenue: 960000,
-    totalCommission: 384000,
-    totalPayout: 576000,
-  },
-};
+interface Professional {
+  id: string;
+  name: string;
+}
 
-const sessionHistory = [
-  { id: '1', patient: 'María González', professional: 'Alejandra Moreno', professionalId: '1', date: '2026-07-10', service: 'Acompañamiento emocional', amount: 80000, commission: 32000, payout: 48000 },
-  { id: '2', patient: 'Carlos Ruiz', professional: 'Carolina Jiménez', professionalId: '2', date: '2026-07-10', service: 'Acompañamiento maternidad posparto', amount: 90000, commission: 36000, payout: 54000 },
-  { id: '3', patient: 'Ana Martínez', professional: 'Alejandra Moreno', professionalId: '1', date: '2026-07-08', service: 'Acompañamiento emocional', amount: 80000, commission: 32000, payout: 48000 },
-  { id: '4', patient: 'Laura Sánchez', professional: 'Carolina Jiménez', professionalId: '2', date: '2026-07-07', service: 'Acompañamiento emocional', amount: 80000, commission: 32000, payout: 48000 },
-  { id: '5', patient: 'Pedro López', professional: 'Alejandra Moreno', professionalId: '1', date: '2026-07-05', service: 'Acompañamiento emocional', amount: 80000, commission: 32000, payout: 48000 },
-];
+interface SessionDetail {
+  id: string;
+  patient: string;
+  professional: string;
+  professionalId: string;
+  date: string;
+  service: string;
+  amount: number;
+  commission: number;
+  payout: number;
+}
 
-const professionals = [
-  { id: 'all', name: 'Todos los profesionales' },
-  { id: '1', name: 'Alejandra Moreno' },
-  { id: '2', name: 'Carolina Jiménez' },
-];
+interface MetricsData {
+  totalSessions: number;
+  totalRevenue: number;
+  totalCommission: number;
+  totalPayout: number;
+  sessions: SessionDetail[];
+}
+
+const formatCOP = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 0,
+});
+
+function getCurrentMonthRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0],
+  };
+}
 
 export default function MetricasPage() {
+  const { start: defaultStart, end: defaultEnd } = getCurrentMonthRange();
+
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [filterPro, setFilterPro] = useState('all');
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: new Date(2026, 6, 1),
-    to: new Date(2026, 6, 14),
-  });
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [startDate, setStartDate] = useState(defaultStart);
+  const [endDate, setEndDate] = useState(defaultEnd);
+  const [metrics, setMetrics] = useState<MetricsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const metrics = metricsByProfessional[filterPro as keyof typeof metricsByProfessional] || metricsByProfessional.all;
+  // Fetch professionals list
+  useEffect(() => {
+    fetch('/api/professionals')
+      .then((r) => r.json())
+      .then((data) => {
+        setProfessionals(
+          Array.isArray(data) ? data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) : []
+        );
+      })
+      .catch(() => {});
+  }, []);
 
-  const filteredHistory = filterPro === 'all'
-    ? sessionHistory
-    : sessionHistory.filter((s) => s.professionalId === filterPro);
+  // Fetch metrics
+  const fetchMetrics = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-  const dateLabel = dateRange.from && dateRange.to
-    ? `${format(dateRange.from, 'd MMM', { locale: es })} — ${format(dateRange.to, 'd MMM yyyy', { locale: es })}`
-    : 'Seleccionar rango';
+    try {
+      const params = new URLSearchParams({ startDate, endDate });
+      if (filterPro !== 'all') params.set('professionalId', filterPro);
+
+      const res = await fetch(`/api/admin/metrics?${params}`);
+      if (!res.ok) throw new Error('Error al cargar métricas');
+
+      const data: MetricsData = await res.json();
+      setMetrics(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [startDate, endDate, filterPro]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   return (
     <div>
@@ -79,156 +111,164 @@ export default function MetricasPage() {
       </p>
 
       {/* Filters */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <Select value={filterPro} onValueChange={(v) => v && setFilterPro(v)}>
-          <SelectTrigger className="h-10 w-full text-sm sm:w-56">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {professionals.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1 sm:max-w-56">
+          <Label className="text-xs text-muted-foreground">Profesional</Label>
+          <Select value={filterPro} onValueChange={(v) => v && setFilterPro(v)}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los profesionales</SelectItem>
+              {professionals.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {/* Date range picker */}
-        <div className="relative">
-          <Button
-            variant="outline"
-            className="h-10 w-full justify-start gap-2 text-sm font-normal sm:w-64"
-            onClick={() => setShowCalendar(!showCalendar)}
-          >
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            {dateLabel}
-          </Button>
+        <div>
+          <Label className="text-xs text-muted-foreground">Desde</Label>
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="mt-1"
+          />
+        </div>
 
-          {showCalendar && (
-            <div className="absolute z-50 mt-1 rounded-xl border border-border bg-white p-3 shadow-lg">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={(range) => {
-                  if (range) {
-                    setDateRange({ from: range.from, to: range.to });
-                    if (range.from && range.to) {
-                      setShowCalendar(false);
-                    }
-                  }
-                }}
-                numberOfMonths={1}
-                className="rounded-lg"
-              />
-              <div className="mt-2 flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDateRange({ from: undefined, to: undefined });
-                  }}
-                >
-                  Limpiar
-                </Button>
-                <Button size="sm" onClick={() => setShowCalendar(false)}>
-                  Aplicar
-                </Button>
-              </div>
-            </div>
-          )}
+        <div>
+          <Label className="text-xs text-muted-foreground">Hasta</Label>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="mt-1"
+          />
         </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-              <CalendarIcon className="h-5 w-5 text-grape" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Sesiones</p>
-              <p className="text-xl font-bold text-grape">{metrics.totalSessions}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Loading */}
+      {isLoading && (
+        <div className="mt-8 flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-plum" />
+        </div>
+      )}
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-              <DollarSign className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Ingresos totales</p>
-              <p className="text-xl font-bold text-grape">${metrics.totalRevenue.toLocaleString('es-CO')}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Error */}
+      {error && (
+        <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
 
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-jasmine/20">
-              <TrendingUp className="h-5 w-5 text-grape" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Comisión plataforma</p>
-              <p className="text-xl font-bold text-grape">${metrics.totalCommission.toLocaleString('es-CO')}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/40">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-plum/20">
-              <Users className="h-5 w-5 text-grape" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">A pagar profesionales</p>
-              <p className="text-xl font-bold text-grape">${metrics.totalPayout.toLocaleString('es-CO')}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Session history */}
-      <Card className="mt-8 border-border/40">
-        <CardHeader>
-          <CardTitle className="text-base text-grape">Historial de sesiones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {filteredHistory.map((session) => (
-              <div
-                key={session.id}
-                className="rounded-lg border border-border/40 p-3"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-grape">{session.patient}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {session.date} • {session.service} • {session.professional}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <div className="text-right">
-                      <p className="text-muted-foreground">Cobrado</p>
-                      <p className="font-semibold">${session.amount.toLocaleString('es-CO')}</p>
-                    </div>
-                    <Separator orientation="vertical" className="h-8" />
-                    <div className="text-right">
-                      <p className="text-muted-foreground">Comisión</p>
-                      <p className="font-semibold text-grape">${session.commission.toLocaleString('es-CO')}</p>
-                    </div>
-                    <Separator orientation="vertical" className="h-8" />
-                    <div className="text-right">
-                      <p className="text-muted-foreground">Neto</p>
-                      <p className="font-semibold text-green-600">${session.payout.toLocaleString('es-CO')}</p>
-                    </div>
-                  </div>
+      {!isLoading && !error && metrics && (
+        <>
+          {/* Stats cards */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-border/40">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                  <CalendarIcon className="h-5 w-5 text-grape" />
                 </div>
-              </div>
-            ))}
+                <div>
+                  <p className="text-xs text-muted-foreground">Sesiones</p>
+                  <p className="text-xl font-bold text-grape">{metrics.totalSessions}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Ingresos totales</p>
+                  <p className="text-xl font-bold text-grape">{formatCOP.format(metrics.totalRevenue)}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-jasmine/20">
+                  <TrendingUp className="h-5 w-5 text-grape" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Comisión plataforma</p>
+                  <p className="text-xl font-bold text-grape">{formatCOP.format(metrics.totalCommission)}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-plum/20">
+                  <Users className="h-5 w-5 text-grape" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">A pagar profesionales</p>
+                  <p className="text-xl font-bold text-grape">{formatCOP.format(metrics.totalPayout)}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Session history */}
+          <Card className="mt-8 border-border/40">
+            <CardHeader>
+              <CardTitle className="text-base text-grape">Historial de sesiones</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.sessions.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No hay sesiones en este período
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {metrics.sessions.map((session) => (
+                    <div key={session.id} className="rounded-lg border border-border/40 p-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-grape">{session.patient}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(session.date)} • {session.service} • {session.professional}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Cobrado</p>
+                            <p className="font-semibold">{formatCOP.format(session.amount)}</p>
+                          </div>
+                          <Separator orientation="vertical" className="h-8" />
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Comisión</p>
+                            <p className="font-semibold text-grape">{formatCOP.format(session.commission)}</p>
+                          </div>
+                          <Separator orientation="vertical" className="h-8" />
+                          <div className="text-right">
+                            <p className="text-muted-foreground">Neto</p>
+                            <p className="font-semibold text-green-600">{formatCOP.format(session.payout)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
+}
+
+function formatDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
