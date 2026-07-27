@@ -49,7 +49,7 @@ export function CountrySelect({
       <Button
         type="button"
         variant="outline"
-        className="h-12 w-full justify-between text-base font-normal"
+        className="h-10 w-full justify-between bg-white text-base font-normal"
         onClick={() => setOpen(!open)}
       >
         <span className={cn(!value && 'text-muted-foreground')}>
