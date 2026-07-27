@@ -5,8 +5,8 @@ import { CalendarDays } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/shared/date-picker';
 
 type PresetType = 'este-mes' | 'mes-anterior' | 'personalizado';
 
@@ -130,29 +130,21 @@ export function IncomeFilters({
         {activePreset === 'personalizado' && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="income-start-date" className="text-sm text-grape">
-                Desde
-              </Label>
-              <Input
-                id="income-start-date"
-                type="date"
+              <Label className="text-sm text-grape">Desde</Label>
+              <DatePicker
                 value={startDate}
-                max={endDate}
-                onChange={handleStartDateChange}
-                className="min-h-11 text-base"
+                onChange={(v) => { setActivePreset('personalizado'); onDateChange(v, endDate); }}
+                placeholder="Fecha inicio"
+                mode="general"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="income-end-date" className="text-sm text-grape">
-                Hasta
-              </Label>
-              <Input
-                id="income-end-date"
-                type="date"
+              <Label className="text-sm text-grape">Hasta</Label>
+              <DatePicker
                 value={endDate}
-                min={startDate}
-                onChange={handleEndDateChange}
-                className="min-h-11 text-base"
+                onChange={(v) => { setActivePreset('personalizado'); onDateChange(startDate, v); }}
+                placeholder="Fecha fin"
+                mode="general"
               />
             </div>
           </div>

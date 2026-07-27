@@ -12,19 +12,21 @@ interface DatePickerProps {
   value?: string; // ISO date string "YYYY-MM-DD"
   onChange: (value: string) => void;
   placeholder?: string;
+  /** If true, uses a simple month navigation (no year dropdown, no past-only restriction) */
+  mode?: 'birthdate' | 'general';
 }
 
 export function DatePicker({
   value,
   onChange,
   placeholder = 'Selecciona una fecha',
+  mode = 'birthdate',
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   const selectedDate = value ? new Date(value + 'T12:00:00') : undefined;
 
-  // Default month to show: if user is likely an adult, start ~25 years ago
-  const defaultMonth = selectedDate ?? new Date(2000, 0, 1);
+  const defaultMonth = selectedDate ?? (mode === 'birthdate' ? new Date(2000, 0, 1) : new Date());
 
   return (
     <div className="relative">
@@ -54,10 +56,14 @@ export function DatePicker({
               setOpen(false);
             }}
             defaultMonth={defaultMonth}
-            disabled={(date) => date > new Date() || date < new Date('1920-01-01')}
-            captionLayout="dropdown"
-            startMonth={new Date(1940, 0)}
-            endMonth={new Date()}
+            {...(mode === 'birthdate'
+              ? {
+                  disabled: (date: Date) => date > new Date() || date < new Date('1920-01-01'),
+                  captionLayout: 'dropdown' as const,
+                  startMonth: new Date(1940, 0),
+                  endMonth: new Date(),
+                }
+              : {})}
             className="rounded-xl"
           />
         </div>

@@ -11,8 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/shared/date-picker';
 
 interface Professional {
   id: string;
@@ -129,22 +129,26 @@ export default function MetricasPage() {
 
         <div>
           <Label className="text-xs text-muted-foreground">Desde</Label>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="mt-1"
-          />
+          <div className="mt-1">
+            <DatePicker
+              value={startDate}
+              onChange={setStartDate}
+              placeholder="Fecha inicio"
+              mode="general"
+            />
+          </div>
         </div>
 
         <div>
           <Label className="text-xs text-muted-foreground">Hasta</Label>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="mt-1"
-          />
+          <div className="mt-1">
+            <DatePicker
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="Fecha fin"
+              mode="general"
+            />
+          </div>
         </div>
       </div>
 
