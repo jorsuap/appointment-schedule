@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Save, User, Mail, DollarSign, Percent } from 'lucide-react';
+import { Loader2, Save, User, Mail, DollarSign, Percent, Upload, Camera } from 'lucide-react';
 
 import {
   updateProfileSchema,
@@ -246,25 +246,17 @@ export function ProfileForm() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="photoUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-grape">URL de foto de perfil</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://ejemplo.com/mi-foto.jpg"
-                        className="h-11 text-base"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Photo upload */}
+              <div className="space-y-2">
+                <FormLabel className="text-grape">Foto de perfil</FormLabel>
+                <PhotoUpload
+                  currentPhotoUrl={profile.photoUrl}
+                  onUploaded={(url) => {
+                    form.setValue('photoUrl', url);
+                    setProfile((prev) => prev ? { ...prev, photoUrl: url } : prev);
+                  }}
+                />
+              </div>
 
               <Button
                 type="submit"
@@ -414,6 +406,108 @@ function ProfileFormSkeleton() {
           <div className="h-11 w-40 animate-pulse rounded bg-muted" />
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/**
+ * Photo upload component with preview, drag-and-drop, and Cloudinary integration.
+ */
+function PhotoUpload({
+  currentPhotoUrl,
+  onUploaded,
+}: {
+  currentPhotoUrl: string | null;
+  onUploaded: (url: string) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(currentPhotoUrl);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type and size
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten imágenes');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no debe superar 5MB');
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      setPreview(base64);
+      setIsUploading(true);
+
+      try {
+        const res = await fetch('/api/professional/profile/upload-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Error al subir la imagen');
+        }
+
+        const { photoUrl } = await res.json();
+        setPreview(photoUrl);
+        onUploaded(photoUrl);
+        toast.success('Foto actualizada');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Error al subir');
+        setPreview(currentPhotoUrl);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      {/* Preview */}
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-plum/30 bg-secondary">
+        {preview ? (
+          <img
+            src={preview}
+            alt="Foto de perfil"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Camera className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+            <Loader2 className="h-5 w-5 animate-spin text-white" />
+          </div>
+        )}
+      </div>
+
+      {/* Upload button */}
+      <div className="flex-1">
+        <label className="inline-flex h-11 min-w-[44px] cursor-pointer items-center gap-2 rounded-md border border-input bg-white px-4 text-sm font-medium text-grape transition-colors hover:bg-plum/10">
+          <Upload className="h-4 w-4" />
+          {isUploading ? 'Subiendo...' : 'Subir foto'}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={isUploading}
+            className="sr-only"
+          />
+        </label>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          JPG, PNG o WebP. Máximo 5MB. Se recortará a 400×400px.
+        </p>
+      </div>
     </div>
   );
 }
