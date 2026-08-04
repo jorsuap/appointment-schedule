@@ -31,14 +31,6 @@ export default async function AgendarPage() {
                 <div className="flex-1">
                   <h3 className="text-base font-semibold text-grape">{service.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{service.description}</p>
-                  <div className="mt-2 flex gap-2">
-                    <Badge variant="secondary">{service.durationMin} min</Badge>
-                    {service.price > 0 && (
-                      <Badge variant="outline">
-                        ${service.price.toLocaleString('es-CO')} COP
-                      </Badge>
-                    )}
-                  </div>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
               </CardContent>

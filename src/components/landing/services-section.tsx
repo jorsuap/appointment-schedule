@@ -40,14 +40,6 @@ export function ServicesSection({
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="text-muted-foreground">{service.description}</p>
-                <div className="mt-4 flex items-center gap-2">
-                  <Badge variant="secondary">{service.durationMin} min</Badge>
-                  {service.price > 0 && (
-                    <Badge variant="outline">
-                      ${service.price.toLocaleString('es-CO')} COP
-                    </Badge>
-                  )}
-                </div>
               </CardContent>
               <CardFooter>
                 <LinkButton href={`/agendar?servicio=${service.id}`} className="w-full">
