@@ -4,34 +4,29 @@ inclusion: auto
 
 # Arquitectura del Proyecto — conAlma
 
-## Descripción
-
-conAlma es una plataforma de agendamiento de citas de psicología y talleres de bienestar emocional. Permite a pacientes agendar sesiones online con profesionales, pagar, y recibir confirmación con link de videollamada.
-
 ## Stack Tecnológico
 
-| Capa           | Tecnología                        | Versión           |
-| -------------- | --------------------------------- | ----------------- |
-| Framework      | Next.js (App Router)              | 16.x              |
-| Lenguaje       | TypeScript                        | 5.x (strict mode) |
-| UI Components  | shadcn/ui (Base UI + Radix)       | v4                |
-| Styling        | Tailwind CSS                      | v4                |
-| Base de datos  | PostgreSQL (Neon serverless)      | 18                |
-| ORM            | Prisma                            | 7.x               |
-| DB Adapter     | @prisma/adapter-neon              | —                 |
-| Autenticación  | NextAuth.js (Auth.js)             | v5 beta           |
-| State (server) | TanStack Query                    | —                 |
-| State (client) | Zustand                           | —                 |
-| Forms          | React Hook Form + Zod             | —                 |
-| Emails         | Resend                            | —                 |
-| Pagos          | Wompi (PSE + tarjetas)            | Sandbox/Prod      |
-| Calendar       | Google Calendar API + OAuth 2.0   | v3                |
-| Hosting        | Vercel                            | Free tier         |
-| Dominio        | conalma.care                      | Vercel DNS        |
-| CI/CD          | Vercel auto-deploy (push to main) | —                 |
-| Icons          | Lucide React                      | —                 |
+| Capa           | Tecnología                      | Versión           |
+| -------------- | ------------------------------- | ----------------- |
+| Framework      | Next.js (App Router)            | 16.x              |
+| Lenguaje       | TypeScript                      | 5.x (strict mode) |
+| UI Components  | shadcn/ui (Base UI)             | v4                |
+| Styling        | Tailwind CSS                    | v4                |
+| Base de datos  | PostgreSQL (Neon serverless)    | 18                |
+| ORM            | Prisma                          | 7.x               |
+| DB Adapter     | @prisma/adapter-neon            | —                 |
+| Autenticación  | NextAuth.js (Auth.js)           | v5                |
+| State (client) | Zustand                         | —                 |
+| Forms          | React Hook Form + Zod           | —                 |
+| Emails         | Resend                          | —                 |
+| Pagos          | Wompi (PSE + tarjetas)          | Producción        |
+| Calendar       | Google Calendar API + OAuth 2.0 | v3                |
+| Imágenes       | Cloudinary                      | Free tier         |
+| Hosting        | Vercel                          | —                 |
+| Icons          | Lucide React                    | —                 |
+| Toasts         | Sonner                          | —                 |
 
-## Arquitectura
+## Arquitectura Fullstack (Monolito Next.js)
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -40,7 +35,7 @@ conAlma es una plataforma de agendamiento de citas de psicología y talleres de 
 │                  Next.js 16 (App Router)             │
 │                                                      │
 │  ┌──────────────┐  ┌──────────────┐                 │
-│  │  App Routes  │  │  API Routes  │                 │
+│  │  Pages/UI    │  │  API Routes  │                 │
 │  │  (Frontend)  │  │  (Backend)   │                 │
 │  └──────┬───────┘  └──────┬───────┘                 │
 │         │                  │                         │
@@ -50,101 +45,89 @@ conAlma es una plataforma de agendamiento de citas de psicología y talleres de 
 │  └──────────────┬───────────────────┘                │
 └─────────────────┼───────────────────────────────────┘
                   │
-    ┌─────────────┼─────────────┬──────────────┐
-    │             │             │              │
-    ▼             ▼             ▼              ▼
-┌────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐
-│  Neon  │  │ Resend  │  │  Wompi  │  │ Google   │
-│PostgreSQL│ │ (Email) │  │ (Pagos) │  │ Calendar │
-└────────┘  └─────────┘  └─────────┘  └──────────┘
+    ┌─────────────┼──────────────┬──────────────┬──────────┐
+    ▼             ▼              ▼              ▼          ▼
+┌────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌──────────┐
+│  Neon  │  │ Resend  │  │  Wompi  │  │ Google   │  │Cloudinary│
+│PostgreSQL│ │ (Email) │  │ (Pagos) │  │ Calendar │  │(Imágenes)│
+└────────┘  └─────────┘  └─────────┘  └──────────┘  └──────────┘
 ```
 
 ## Estructura de Carpetas
 
 ```
 src/
-├── app/                          # App Router
-│   ├── (public)/                 # Rutas públicas (landing, agendamiento)
-│   ├── (admin)/admin/            # Panel de administración
-│   ├── (professional)/profesional/  # Portal del profesional (futuro)
-│   ├── auth/                     # Login
-│   ├── api/                      # API Routes (backend)
-│   └── layout.tsx                # Root layout
+├── app/
+│   ├── (public)/                 # Landing + flujo agendamiento (sin auth)
+│   ├── (admin)/admin/            # Panel de administración (rol ADMIN)
+│   ├── (professional)/profesional/ # Portal del profesional (rol PROFESSIONAL)
+│   ├── auth/login/               # Login compartido
+│   └── api/
+│       ├── admin/                # APIs solo para admin (métricas)
+│       ├── appointments/         # Crear cita (público)
+│       ├── availability/         # Consultar disponibilidad (público)
+│       ├── payments/webhook/     # Webhook Wompi
+│       ├── professional/         # APIs del portal profesional (autenticadas)
+│       ├── professionals/        # CRUD profesionales (admin)
+│       ├── patients/             # Pacientes (admin)
+│       └── services/             # Servicios (público)
 ├── components/
-│   ├── ui/                       # Componentes shadcn/ui
-│   ├── layouts/                  # Header, Footer, Sidebars
-│   ├── booking/                  # Componentes del flujo de agendamiento
+│   ├── ui/                       # shadcn/ui base components
+│   ├── layouts/                  # Sidebars, Header, Footer
 │   ├── landing/                  # Secciones de la landing
-│   └── shared/                   # Componentes reutilizables (CountrySelect, DatePicker)
+│   ├── professional/             # Componentes del portal profesional
+│   └── shared/                   # DatePicker, CountrySelect, etc.
 ├── lib/
-│   ├── prisma.ts                 # Singleton Prisma Client con Neon adapter
-│   ├── auth.ts                   # Configuración NextAuth.js v5
-│   ├── resend.ts                 # Cliente Resend
-│   ├── wompi.ts                  # Utilidades Wompi (firma, verificación)
-│   ├── google-calendar.ts        # Google Calendar API
-│   ├── validations/              # Schemas de Zod
-│   ├── emails/                   # Templates HTML de emails
-│   └── utils.ts                  # cn() y utilidades
+│   ├── prisma.ts                 # Singleton Prisma Client
+│   ├── auth.ts                   # NextAuth config
+│   ├── cloudinary.ts             # Upload de imágenes
+│   ├── encryption.ts             # AES-256-GCM para OAuth tokens
+│   ├── google-oauth.ts           # OAuth 2.0 helpers
+│   ├── password-generator.ts     # Contraseñas temporales
+│   ├── get-professional-session.ts # Auth helper para API routes profesional
+│   ├── validations/              # Zod schemas
+│   └── emails/                   # Templates + send functions
 ├── stores/
-│   └── booking-store.ts          # Zustand store (wizard de agendamiento)
-├── types/
-│   └── next-auth.d.ts            # Type extensions
-└── middleware.ts                  # Protección de rutas por cookie
+│   └── booking-store.ts          # Zustand (wizard agendamiento)
+└── middleware.ts                  # Protección rutas /admin/* y /profesional/*
 ```
 
 ## Roles del Sistema
 
-| Rol          | Acceso            | Descripción                                               |
-| ------------ | ----------------- | --------------------------------------------------------- |
-| ADMIN        | `/admin/*`        | Propietaria de conAlma. Gestión global.                   |
-| PROFESSIONAL | `/profesional/*`  | Psicóloga. Gestiona su perfil, disponibilidad, pacientes. |
-| (Sin rol)    | `/`, `/agendar/*` | Paciente público. Agendamiento sin login.                 |
+| Rol          | Acceso            | Descripción                                                         |
+| ------------ | ----------------- | ------------------------------------------------------------------- |
+| ADMIN        | `/admin/*`        | Propietaria. Gestión global, métricas, profesionales.               |
+| PROFESSIONAL | `/profesional/*`  | Psicóloga. Perfil, disponibilidad, calendario, pacientes, ingresos. |
+| (Público)    | `/`, `/agendar/*` | Paciente. Agendamiento sin login.                                   |
 
-## Base de Datos
+## Decisiones Técnicas Clave
 
-- **Provider**: Neon PostgreSQL serverless (us-east-1)
-- **ORM**: Prisma 7 con `@prisma/adapter-neon`
-- **Config**: `prisma.config.ts` (datasource URL) + `prisma/schema.prisma` (modelos)
-- **Migrations**: `npx prisma migrate dev`
-- **Seed**: `npx tsx prisma/seed.ts`
-- **Client import**: `import { PrismaClient } from '@prisma/client'`
+### Prisma 7
 
-## Autenticación
+- Config en `prisma.config.ts` (NO `url` en schema)
+- Adapter: `@prisma/adapter-neon` con `PrismaNeon`
+- Import: `from '@prisma/client'`
 
-- **NextAuth v5** con Credentials provider (email + password)
-- **Estrategia**: JWT (no database sessions)
-- **Cookie name**: `authjs.session-token` (HTTP) / `__Secure-authjs.session-token` (HTTPS)
-- **Middleware**: Verifica existencia de cookie (no decodifica JWT en Edge por límite de 1MB)
-- **Login**: Client-side `signIn()` de `next-auth/react` (no server action)
+### NextAuth v5
 
-## Pagos (Wompi)
+- Cookie: `authjs.session-token` (HTTP) / `__Secure-authjs.session-token` (HTTPS)
+- JWT strategy, 24h expiry
+- Middleware solo verifica cookie (no decodifica en Edge)
+- `trigger === 'update'` en JWT callback para refrescar datos post-cambio de contraseña
 
-- **Modo**: Sandbox (claves `pub_test_*`, `prv_test_*`)
-- **Flujo**: Crear cita → crear payment → redirect a Wompi checkout → webhook confirma
-- **Webhook**: `/api/payments/webhook` recibe `transaction.updated`
-- **Integridad**: SHA256 con `WOMPI_INTEGRITY_SECRET`
-- **Tarjeta test**: `4242 4242 4242 4242`, cualquier fecha futura, CVV `123`
+### shadcn/ui v4 (Base UI)
 
-## Emails (Resend)
+- NO tiene `asChild` — usar `render` prop o `<LinkButton>` component
+- Select: `@base-ui/react` — `onValueChange` puede ser null
+- Global styles en base components: Input h-10 bg-white, SelectTrigger h-10 bg-white
 
-- **Dominio**: `conalma.care` (verificado)
-- **From**: `citas@conalma.care`
-- **Free tier**: 100 emails/día
-- **Templates**: HTML inline en `src/lib/emails/`
+### Pacientes
 
-## Google Calendar
+- Email es `@unique` en Patient model
+- Creación usa `upsert` por email (no duplica si mismo paciente agenda otra vez)
 
-- **Service Account**: `conalma-calendar@conalma-502822.iam.gserviceaccount.com`
-- **Limitación actual**: Gmail gratuito no permite Meet ni asistentes vía Service Account
-- **Solución en progreso**: OAuth 2.0 por profesional (spec `professional-portal`)
-- **Evento sin Meet funciona**: Se crea el evento en el calendario del profesional
+### OAuth Google Calendar
 
-## Convenciones de Código
-
-- **Idioma UI**: Español (textos visibles al usuario)
-- **Idioma código**: Inglés (variables, funciones, tipos, comentarios)
-- **Mobile-first**: Diseñar para 375px primero, escalar con `sm:`, `md:`, `lg:`
-- **Componentes server por defecto**: Usar `'use client'` solo cuando necesario
-- **API Routes**: Una por archivo, verbos HTTP como funciones exportadas (GET, POST, PUT)
-- **Forms**: React Hook Form + Zod schema + shadcn Form components
-- **Imports**: Absolute con `@/` (apunta a `src/`)
+- Tokens encriptados con AES-256-GCM en DB
+- State parameter firmado con HMAC-SHA256
+- Fire-and-forget: si falla crear evento, la cita se confirma igual

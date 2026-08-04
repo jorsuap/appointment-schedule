@@ -7,170 +7,104 @@ inclusion: auto
 ## Flujo de Agendamiento (Paciente → Pago → Confirmación)
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Paciente │───▶│  Landing  │───▶│ Selección│───▶│Formulario│
-│ (mobile) │    │  (SSR)    │    │ Servicio │    │  Datos   │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                                       │
-                     ┌─────────────────────────────────┘
-                     ▼
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│Evaluación│───▶│Emergencia│───▶│Profesional│───▶│ Horario  │
-│ Emocional│    │ Contacto │    │ Selección │    │(Calendar)│
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                                       │
-                     ┌─────────────────────────────────┘
-                     ▼
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Confirmar│───▶│  Wompi   │───▶│ Webhook  │───▶│Confirmac.│
-│ + Pagar  │    │ Checkout │    │ Callback │    │  Página  │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
+Landing → Selección Servicio → Datos Personales → Evaluación Emocional
+→ Contacto Emergencia → Selección Profesional → Horario (Calendar)
+→ Confirmar + Pagar → Wompi Checkout → Webhook → Confirmación
 ```
 
-### Detalle del flujo post-pago (Webhook)
+### Post-pago (Webhook Wompi)
 
-```
-Wompi (transaction.updated: APPROVED)
-         │
-         ▼
-/api/payments/webhook
-         │
-         ├── 1. Verificar firma del webhook
-         ├── 2. Verificar transacción con Wompi API
-         ├── 3. Actualizar Payment (status: APPROVED)
-         ├── 4. Actualizar Appointment (status: CONFIRMED)
-         ├── 5. Crear evento en Google Calendar (si OAuth conectado)
-         │       └── Generar Meet link + invitar asistente
-         ├── 6. Guardar meetLink en Appointment
-         └── 7. Enviar email de confirmación (Resend)
-                 └── Incluir: fecha, hora, profesional, link Meet
-```
+1. Wompi envía `transaction.updated: APPROVED`
+2. Verificar firma + confirmar con Wompi API
+3. Actualizar Payment → APPROVED
+4. Actualizar Appointment → CONFIRMED
+5. Si profesional tiene OAuth conectado:
+   - Decrypt refresh token → refresh access token
+   - Crear evento en Google Calendar con Meet link
+   - Guardar meetLink + googleEventId en Appointment
+6. Si NO tiene OAuth: confirmar cita sin evento (sin Meet)
+7. Enviar email confirmación al paciente (con Meet link si existe)
+8. Enviar email notificación al profesional
 
-## Flujo de Disponibilidad (Cómo se calculan los slots)
+### Cálculo de Disponibilidad
 
 ```
 GET /api/availability?professionalId=X&serviceId=Y
 
-1. Obtener duración del servicio (Service.durationMin)
-2. Obtener horarios recurrentes del profesional (Availability[])
-3. Obtener fechas bloqueadas (BlockedDate[])
-4. Obtener citas existentes CONFIRMED/PENDING_PAYMENT (Appointment[])
-5. Para cada día de los próximos 30 días:
-   a. ¿Es un día bloqueado? → Skip
-   b. ¿Tiene horario para este día de la semana? → Generar slots
-   c. Para cada slot generado: ¿ya tiene cita existente? → Excluir
-6. Retornar: { slots: { "2026-07-21": ["09:00", "10:00", ...] } }
+1. Duración del servicio (durationMin)
+2. Horarios recurrentes del profesional (Availability[])
+3. Fechas bloqueadas (BlockedDate[])
+4. Citas existentes CONFIRMED/PENDING_PAYMENT
+5. Generar slots libres para próximos 30 días
 ```
 
 ## Flujo de Autenticación
 
 ```
-┌──────────────┐
-│ /auth/login  │ (Client Component)
-│              │
-│ signIn() de  │──── POST /api/auth/callback/credentials
-│ next-auth/   │           │
-│ react        │           ▼
-└──────────────┘    ┌──────────────┐
-                    │ src/lib/auth │
-                    │              │
-                    │ 1. Find user │──── Prisma → Neon DB
-                    │ 2. Compare   │──── bcrypt
-                    │    password  │
-                    │ 3. Return    │
-                    │    JWT token │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    Cookie set: authjs.session-token
-                           │
-                           ▼
-                    router.push('/admin' o '/profesional')
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  Middleware  │ Verifica cookie existe
-                    │              │ Si no → redirect /auth/login
-                    └──────────────┘
+/auth/login (ambos roles)
+  │
+  ├── signIn('credentials', { email, password, redirect: false })
+  │
+  ├── JWT callback: role, professionalId, mustChangePassword
+  │
+  ├── Si ADMIN → redirect /admin
+  └── Si PROFESSIONAL → redirect /profesional
+       │
+       └── Si mustChangePassword → Modal obligatorio → POST /api/professional/change-password
+            └── DB: mustChangePassword = false → reload → modal no aparece
 ```
 
-## Conexión entre Servicios Externos
+## Flujo de Creación de Profesional
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    VERCEL (Next.js)                       │
-│                                                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │  Pages/     │  │  API Routes │  │  Middleware  │    │
-│  │  Components │  │  /api/*     │  │  (Edge)     │    │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘    │
-│         │                │                  │           │
-└─────────┼────────────────┼──────────────────┼───────────┘
-          │                │                  │
-          │                │                  │ Lee cookie
-          │                │                  │
-          │    ┌───────────┼──────────────────┘
-          │    │           │
-          ▼    ▼           ▼
-┌──────────────────┐  ┌─────────────┐
-│ NEON PostgreSQL  │  │   RESEND    │
-│                  │  │             │
-│ • users          │  │ Envía email │
-│ • professionals  │  │ confirmación│
-│ • patients       │  │             │
-│ • appointments   │  │ From:       │
-│ • payments       │  │ citas@      │
-│ • site_content   │  │ conalma.care│
-│ • availabilities │  └─────────────┘
-│ • progress_notes │
-│ • blocked_dates  │  ┌─────────────┐
-│ • professional_  │  │   WOMPI     │
-│   tariffs        │  │             │
-└──────────────────┘  │ 1. Crear    │
-                      │    payment  │
-                      │ 2. Redirect │
-┌──────────────────┐  │    checkout │
-│ GOOGLE CALENDAR  │  │ 3. Webhook  │
-│                  │  │    confirm  │
-│ • Crear eventos  │  └─────────────┘
-│ • Meet link (*)  │
-│ • Invitaciones(*)│
-│                  │
-│ (*) Requiere     │
-│ OAuth 2.0 del    │
-│ profesional      │
-└──────────────────┘
+Admin crea profesional (/admin/profesionales)
+  │
+  ├── Genera contraseña temporal (crypto.randomBytes)
+  ├── Crea User (PROFESSIONAL, mustChangePassword=true, hash)
+  ├── Crea Professional (userId linked)
+  ├── Crea tariffs + services
+  └── Muestra contraseña UNA VEZ en modal
+       │
+       └── Admin comparte por canal seguro (WhatsApp/llamada)
 ```
 
-## Modelo de Datos (Relaciones principales)
+## Flujo OAuth Google Calendar
+
+```
+Profesional (/profesional/disponibilidad)
+  │
+  ├── Click "Conectar Google Calendar"
+  ├── GET /api/professional/google-calendar/connect → Redirect Google consent
+  ├── Profesional autoriza permisos (calendar.events)
+  ├── Google redirect → GET /callback?code=XXX&state=YYY
+  ├── Verify state (HMAC) → Exchange code → Get tokens
+  ├── Encrypt refresh_token (AES-256-GCM) → Save in DB
+  └── Redirect /profesional/disponibilidad?connected=true
+```
+
+## Flujo de Ingresos (Profesional)
+
+```
+Monto cobrado (tarifa del servicio)
+  - Comisión plataforma = monto × commissionRate / 100
+  - Neto profesional = monto - comisión
+
+Solo cuenta citas con status CONFIRMED o COMPLETED.
+Filtrable por rango de fechas.
+```
+
+## Modelo de Datos (Relaciones)
 
 ```
 User (ADMIN/PROFESSIONAL)
   │
 Professional ──┬── ProfessionalService ── Service
-               ├── ProfessionalTariff
+               ├── ProfessionalTariff (price + commission %)
                ├── Availability (horarios recurrentes)
                ├── BlockedDate (fechas no disponibles)
-               └── Appointment ──┬── Patient
-                                 ├── Payment
-                                 └── ProgressNote
+               └── Appointment ──┬── Patient (unique por email)
+                                 ├── Payment (Wompi)
+                                 └── ProgressNote (authorId = professionalId)
 
 SiteContent (landing administrable)
 ```
-
-## Variables de Entorno (servicios conectados)
-
-| Variable                     | Servicio | Propósito                           |
-| ---------------------------- | -------- | ----------------------------------- |
-| DATABASE_URL                 | Neon     | Conexión PostgreSQL                 |
-| NEXTAUTH_SECRET              | NextAuth | Firma de JWT                        |
-| NEXTAUTH_URL                 | NextAuth | URL base para callbacks             |
-| RESEND_API_KEY               | Resend   | Envío de emails                     |
-| WOMPI_PUBLIC_KEY             | Wompi    | Widget de checkout                  |
-| WOMPI_PRIVATE_KEY            | Wompi    | Verificar transacciones             |
-| WOMPI_EVENTS_SECRET          | Wompi    | Validar webhooks                    |
-| WOMPI_INTEGRITY_SECRET       | Wompi    | Firma de integridad                 |
-| WOMPI_API_URL                | Wompi    | URL base API                        |
-| GOOGLE_SERVICE_ACCOUNT_EMAIL | Google   | Service Account (eventos sin OAuth) |
-| GOOGLE_PRIVATE_KEY           | Google   | Key del Service Account             |
-| NEXT_PUBLIC_APP_URL          | App      | URL pública de la app               |
