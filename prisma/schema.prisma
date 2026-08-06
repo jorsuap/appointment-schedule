@@ -31,6 +31,23 @@ enum PaymentStatus {
   ERROR
 }
 
+enum PackageStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+enum PackagePaymentMethod {
+  WOMPI
+  BANK_TRANSFER
+}
+
+enum Frequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
 // ============================================
 // AUTENTICACIÓN Y ADMIN
 // ============================================
@@ -122,6 +139,7 @@ model Professional {
   blockedDates   BlockedDate[]
   appointments   Appointment[]
   tariffs        ProfessionalTariff[]
+  sessionPackages SessionPackage[]
 
   @@map("professionals")
 }
@@ -216,6 +234,7 @@ model Patient {
 
   appointments  Appointment[]
   progressNotes ProgressNote[]
+  sessionPackages SessionPackage[]
 
   @@map("patients")
 }
@@ -236,14 +255,16 @@ model Appointment {
   reservedUntil  DateTime?
   googleEventId  String?
   meetLink       String?
+  sessionPackageId String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
-  patient       Patient      @relation(fields: [patientId], references: [id])
-  professional  Professional @relation(fields: [professionalId], references: [id])
-  service       Service      @relation(fields: [serviceId], references: [id])
-  payment       Payment?
-  progressNotes ProgressNote[]
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  professional   Professional   @relation(fields: [professionalId], references: [id])
+  service        Service        @relation(fields: [serviceId], references: [id])
+  sessionPackage SessionPackage? @relation(fields: [sessionPackageId], references: [id])
+  payment        Payment?
+  progressNotes  ProgressNote[]
 
   @@map("appointments")
 }
@@ -287,4 +308,75 @@ model ProgressNote {
   patient     Patient      @relation(fields: [patientId], references: [id])
 
   @@map("progress_notes")
+}
+
+// ============================================
+// PAQUETES DE SESIONES
+// ============================================
+
+model SessionPackage {
+  id               String               @id @default(cuid())
+  professionalId   String
+  patientId        String
+  serviceId        String
+  sessionCount     Int
+  frequency        Frequency
+  startDate        DateTime
+  startTime        String
+  endTime          String
+
+  // Pricing (snapshot al momento de creación)
+  pricePerSession      Int
+  discountPerSession   Int    @default(0)
+  totalPrice           Int
+
+  // Payment
+  paymentMethod        PackagePaymentMethod
+  status               PackageStatus    @default(PENDING_PAYMENT)
+  wompiPaymentLinkId   String?
+  wompiPaymentLinkUrl  String?
+  wompiReference       String?          @unique
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  professional  Professional  @relation(fields: [professionalId], references: [id])
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  appointments  Appointment[]
+
+  @@map("session_packages")
+}
+
+// ============================================
+// DESCUENTOS ESCALONADOS
+// ============================================
+
+model DiscountTier {
+  id                 String   @id @default(cuid())
+  minSessions        Int
+  maxSessions        Int
+  discountPerSession Int
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("discount_tiers")
+}
+
+// ============================================
+// DATOS BANCARIOS (configuración admin)
+// ============================================
+
+model BankDetails {
+  id             String   @id @default(cuid())
+  bankName       String
+  accountType    String
+  accountNumber  String
+  accountHolder  String
+  alias          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("bank_details")
 }
