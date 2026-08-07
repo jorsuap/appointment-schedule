@@ -203,7 +203,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
 - [x] 8. Checkpoint — APIs profesional packages completas
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. UI Admin — Configuración de descuentos y datos bancarios
+- [x] 9. UI Admin — Configuración de descuentos y datos bancarios
   - [x] 9.1 Crear `src/components/admin/packages/discount-tier-form.tsx`
     - React Hook Form + Zod: minSessions, maxSessions, discountPerSession (en COP)
     - Modo crear y editar (recibe tier opcional como prop)
@@ -214,7 +214,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Ordenado por minSessions ASC
     - _Requirements: 2.1_
 
-  - [~] 9.3 Crear `src/app/(admin)/admin/configuracion/descuentos/page.tsx`
+  - [x] 9.3 Crear `src/app/(admin)/admin/configuracion/descuentos/page.tsx`
     - Renderiza DiscountTierList + DiscountTierForm (modal o inline)
     - _Requirements: 2.1_
 
@@ -226,7 +226,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Tabla con datos bancarios: banco, tipo, número, titular, alias, estado (activo/inactivo), acciones
     - _Requirements: 6.1, 6.3_
 
-  - [~] 9.6 Crear `src/app/(admin)/admin/configuracion/datos-bancarios/page.tsx`
+  - [x] 9.6 Crear `src/app/(admin)/admin/configuracion/datos-bancarios/page.tsx`
     - Renderiza BankDetailsList + BankDetailsForm
     - _Requirements: 6.1_
 
@@ -263,13 +263,13 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Fetch pacientes con al menos 1 cita CONFIRMED/COMPLETED con este profesional
     - _Requirements: 1.1, 1.3_
 
-  - [~] 12.3 Crear `src/components/professional/packages/step-sessions-config.tsx`
+  - [x] 12.3 Crear `src/components/professional/packages/step-sessions-config.tsx`
     - Paso 2: Input de cantidad de sesiones (min 1) + preview de precio en tiempo real
     - Fetch a `/api/professional/packages/calculate` al cambiar sessionCount
     - Mostrar: precio por sesión, descuento aplicado, total
     - _Requirements: 1.2, 1.4, 2.3_
 
-  - [~] 12.4 Crear `src/components/professional/packages/step-schedule.tsx`
+  - [x] 12.4 Crear `src/components/professional/packages/step-schedule.tsx`
     - Paso 3: DatePicker para fecha de inicio, TimePicker para hora, selector de frecuencia
     - Preview de todas las fechas calculadas (client-side con misma lógica del scheduler)
     - _Requirements: 3.1, 3.6_
