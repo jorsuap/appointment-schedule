@@ -117,16 +117,13 @@ export function PackageList() {
               Paquetes de sesiones creados para tus pacientes
             </CardDescription>
           </div>
-          <Button
-            asChild
-            size="lg"
-            className="min-h-[44px] bg-grape text-white hover:bg-grape/90"
+          <Link
+            href="/profesional/paquetes/nuevo"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-grape px-4 text-sm font-medium text-white hover:bg-grape/90"
           >
-            <Link href="/profesional/paquetes/nuevo">
-              <Plus className="h-4 w-4" />
-              <span>Nuevo Paquete</span>
-            </Link>
-          </Button>
+            <Plus className="h-4 w-4" />
+            <span>Nuevo Paquete</span>
+          </Link>
         </div>
       </CardHeader>
 
@@ -163,16 +160,13 @@ export function PackageList() {
                 : 'Crea tu primer paquete de sesiones para un paciente'}
             </p>
             {!debouncedSearch && (
-              <Button
-                asChild
-                size="lg"
-                className="mt-4 min-h-[44px] bg-grape text-white hover:bg-grape/90"
+              <Link
+                href="/profesional/paquetes/nuevo"
+                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-md bg-grape px-4 text-sm font-medium text-white hover:bg-grape/90"
               >
-                <Link href="/profesional/paquetes/nuevo">
-                  <Plus className="h-4 w-4" />
-                  <span>Crear Paquete</span>
-                </Link>
-              </Button>
+                <Plus className="h-4 w-4" />
+                <span>Crear Paquete</span>
+              </Link>
             )}
           </div>
         )}
