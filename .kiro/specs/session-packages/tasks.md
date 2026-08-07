@@ -231,12 +231,12 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - _Requirements: 6.1_
 
 - [ ] 10. UI Admin — Gestión de paquetes
-  - [~] 10.1 Crear `src/components/admin/packages/admin-package-list.tsx`
+  - [x] 10.1 Crear `src/components/admin/packages/admin-package-list.tsx`
     - Tabla con todos los paquetes: profesional, paciente, sesiones, precio, estado, método de pago
     - Filtros: por estado, profesional, paciente
     - _Requirements: 9.2_
 
-  - [~] 10.2 Crear `src/components/admin/packages/package-status-actions.tsx`
+  - [x] 10.2 Crear `src/components/admin/packages/package-status-actions.tsx`
     - Botones contextuales: Confirmar pago (solo PENDING_PAYMENT + BANK_TRANSFER), Rechazar, Cambiar estado
     - Dialog de confirmación para cada acción
     - _Requirements: 5.3, 5.4, 5.5, 9.5_
@@ -279,12 +279,12 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Descripción breve de cada método
     - _Requirements: 4.1, 5.1_
 
-  - [~] 12.6 Crear `src/components/professional/packages/step-summary.tsx`
+  - [x] 12.6 Crear `src/components/professional/packages/step-summary.tsx`
     - Paso 5: Resumen completo — paciente, sesiones, fechas, precio, método de pago
     - Botón "Crear Paquete" que hace POST a `/api/professional/packages`
     - _Requirements: 3.6, 4.3, 5.1_
 
-  - [~] 12.7 Crear `src/components/professional/packages/payment-link-display.tsx`
+  - [x] 12.7 Crear `src/components/professional/packages/payment-link-display.tsx`
     - Componente post-creación: muestra link de Wompi para copiar/compartir
     - Botón "Copiar link" + botón "Abrir en nueva pestaña"
     - _Requirements: 4.3_
