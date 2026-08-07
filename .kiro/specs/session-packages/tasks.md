@@ -230,7 +230,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Renderiza BankDetailsList + BankDetailsForm
     - _Requirements: 6.1_
 
-- [ ] 10. UI Admin — Gestión de paquetes
+- [x] 10. UI Admin — Gestión de paquetes
   - [x] 10.1 Crear `src/components/admin/packages/admin-package-list.tsx`
     - Tabla con todos los paquetes: profesional, paciente, sesiones, precio, estado, método de pago
     - Filtros: por estado, profesional, paciente
@@ -241,18 +241,18 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Dialog de confirmación para cada acción
     - _Requirements: 5.3, 5.4, 5.5, 9.5_
 
-  - [~] 10.3 Crear `src/app/(admin)/admin/paquetes/page.tsx`
+  - [x] 10.3 Crear `src/app/(admin)/admin/paquetes/page.tsx`
     - Renderiza AdminPackageList + PackageStatusActions
     - _Requirements: 9.2, 5.4_
 
-  - [~] 10.4 Crear `src/app/(admin)/admin/paquetes/pendientes/page.tsx`
+  - [x] 10.4 Crear `src/app/(admin)/admin/paquetes/pendientes/page.tsx`
     - Vista filtrada: solo paquetes PENDING_PAYMENT con paymentMethod BANK_TRANSFER
     - _Requirements: 5.4_
 
-- [~] 11. Checkpoint — UI admin completa
+- [x] 11. Checkpoint — UI admin completa
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. UI Professional — Wizard de creación de paquetes
+- [x] 12. UI Professional — Wizard de creación de paquetes
   - [x] 12.1 Crear `src/components/professional/packages/package-wizard.tsx`
     - Wizard container multi-step (5 pasos) con estado controlado
     - Navegación entre pasos (anterior/siguiente), validación por paso
@@ -289,18 +289,18 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Botón "Copiar link" + botón "Abrir en nueva pestaña"
     - _Requirements: 4.3_
 
-  - [~] 12.8 Crear `src/app/(professional)/profesional/paquetes/nuevo/page.tsx`
+  - [x] 12.8 Crear `src/app/(professional)/profesional/paquetes/nuevo/page.tsx`
     - Server component que renderiza PackageWizard
     - _Requirements: 1.1_
 
 - [ ] 13. UI Professional — Lista y detalle de paquetes
-  - [~] 13.1 Crear `src/components/professional/packages/package-list.tsx`
+  - [x] 13.1 Crear `src/components/professional/packages/package-list.tsx`
     - Tabla de paquetes del profesional: paciente, sesiones, precio, estado, fecha creación
     - Búsqueda por nombre de paciente
     - Badge de estado con colores (PENDING_PAYMENT amarillo, CONFIRMED verde, CANCELLED rojo)
     - _Requirements: 9.1_
 
-  - [~] 13.2 Crear `src/components/professional/packages/package-detail.tsx`
+  - [x] 13.2 Crear `src/components/professional/packages/package-detail.tsx`
     - Vista completa del paquete: datos del paciente, sesiones, precio con desglose de descuento, frecuencia, método de pago
     - Lista de citas programadas con fecha, hora y link Meet (si existe)
     - Botón "Cancelar paquete" (solo si PENDING_PAYMENT)
