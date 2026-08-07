@@ -163,8 +163,8 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
 - [x] 6. Checkpoint — Confirmer y webhook funcionando
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. APIs del portal profesional (Packages)
-  - [~] 7.1 Crear `src/app/api/professional/packages/route.ts` — GET + POST
+- [x] 7. APIs del portal profesional (Packages)
+  - [x] 7.1 Crear `src/app/api/professional/packages/route.ts` — GET + POST
     - GET: Listar SessionPackage del profesional autenticado, con búsqueda por nombre de paciente
     - POST: Flujo completo de creación:
       1. Validar con `createPackageSchema`
@@ -178,18 +178,18 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
       9. Retornar paquete creado + link de pago o datos bancarios
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 3.1, 4.1, 4.3, 5.1_
 
-  - [ ]* 7.2 Write property test for patient eligibility — Patient eligibility filter
+  - [x]* 7.2 Write property test for patient eligibility — Patient eligibility filter
     - **Property 2: Patient eligibility filter**
     - Generadores: patients con appointment histories aleatorias (diferentes status)
     - Verificar: solo pacientes con al menos 1 cita CONFIRMED/COMPLETED aparecen
     - **Validates: Requirements 1.3**
 
-  - [~] 7.3 Crear `src/app/api/professional/packages/[id]/route.ts` — GET (detalle)
+  - [x] 7.3 Crear `src/app/api/professional/packages/[id]/route.ts` — GET (detalle)
     - Retornar SessionPackage completo con: paciente, sesiones, descuento, citas programadas, estado
     - Verificar que el paquete pertenece al profesional autenticado
     - _Requirements: 9.3_
 
-  - [~] 7.4 Crear `src/app/api/professional/packages/[id]/cancel/route.ts` — POST (cancelar)
+  - [x] 7.4 Crear `src/app/api/professional/packages/[id]/cancel/route.ts` — POST (cancelar)
     - Solo permitir si estado = PENDING_PAYMENT
     - Cambiar estado a CANCELLED
     - _Requirements: 9.6, 9.7_
@@ -200,7 +200,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Retornar preview: pricePerSession, discountPerSession, totalPrice, totalDiscount
     - _Requirements: 1.2, 2.3, 2.4_
 
-- [~] 8. Checkpoint — APIs profesional packages completas
+- [x] 8. Checkpoint — APIs profesional packages completas
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. UI Admin — Configuración de descuentos y datos bancarios
