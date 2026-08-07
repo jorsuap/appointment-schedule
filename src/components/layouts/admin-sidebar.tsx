@@ -11,6 +11,7 @@ import {
   UserCircle,
   Briefcase,
   FileText,
+  Package,
   Menu,
   X,
   LogOut,
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/admin/pacientes', label: 'Pacientes', icon: Users },
   { href: '/admin/calendario', label: 'Calendario', icon: CalendarDays },
   { href: '/admin/profesionales', label: 'Profesionales', icon: UserCircle },
+  { href: '/admin/paquetes', label: 'Paquetes', icon: Package },
   { href: '/admin/metricas', label: 'Métricas', icon: Briefcase },
   { href: '/admin/contenido', label: 'Contenido', icon: FileText },
 ];

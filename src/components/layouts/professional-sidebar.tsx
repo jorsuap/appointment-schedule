@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Calendar,
   Users,
+  Package,
   DollarSign,
   Menu,
   X,
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/profesional/disponibilidad', label: 'Disponibilidad', icon: CalendarDays },
   { href: '/profesional/calendario', label: 'Calendario', icon: Calendar },
   { href: '/profesional/pacientes', label: 'Pacientes', icon: Users },
+  { href: '/profesional/paquetes', label: 'Paquetes', icon: Package },
   { href: '/profesional/ingresos', label: 'Ingresos', icon: DollarSign },
 ];
 

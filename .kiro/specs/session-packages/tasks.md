@@ -293,7 +293,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Server component que renderiza PackageWizard
     - _Requirements: 1.1_
 
-- [ ] 13. UI Professional — Lista y detalle de paquetes
+- [x] 13. UI Professional — Lista y detalle de paquetes
   - [x] 13.1 Crear `src/components/professional/packages/package-list.tsx`
     - Tabla de paquetes del profesional: paciente, sesiones, precio, estado, fecha creación
     - Búsqueda por nombre de paciente
@@ -307,39 +307,39 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Re-mostrar link de Wompi si paymentMethod = WOMPI y status = PENDING_PAYMENT
     - _Requirements: 9.3, 9.4, 9.6_
 
-  - [~] 13.3 Crear `src/app/(professional)/profesional/paquetes/page.tsx`
+  - [x] 13.3 Crear `src/app/(professional)/profesional/paquetes/page.tsx`
     - Renderiza PackageList + botón "Nuevo Paquete" (link a /paquetes/nuevo)
     - _Requirements: 9.1_
 
-  - [~] 13.4 Crear `src/app/(professional)/profesional/paquetes/[id]/page.tsx`
+  - [x] 13.4 Crear `src/app/(professional)/profesional/paquetes/[id]/page.tsx`
     - Server component que renderiza PackageDetail
     - _Requirements: 9.3_
 
-- [~] 14. Checkpoint — UI profesional completa
+- [x] 14. Checkpoint — UI profesional completa
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 15. Email de confirmación y navegación
-  - [~] 15.1 Crear `src/lib/emails/package-confirmation.ts` — template email confirmación de paquete
+- [x] 15. Email de confirmación y navegación
+  - [x] 15.1 Crear `src/lib/emails/package-confirmation.ts` — template email confirmación de paquete
     - Template con Resend: resumen del paquete, lista de sesiones con fecha/hora, links Meet
     - Función `sendPackageConfirmationEmail(packageData)` que envía al email del paciente
     - _Requirements: 7.6_
 
-  - [~] 15.2 Integrar envío de email en Package Confirmer
+  - [x] 15.2 Integrar envío de email en Package Confirmer
     - Después de crear todas las citas exitosamente, llamar `sendPackageConfirmationEmail()`
     - Si falla email: log error, no bloquear confirmación (fire-and-forget)
     - _Requirements: 7.6_
 
-  - [~] 15.3 Actualizar sidebar profesional — agregar link a Paquetes
+  - [x] 15.3 Actualizar sidebar profesional — agregar link a Paquetes
     - Modificar `src/components/layouts/professional-sidebar.tsx`:
       - Agregar item "Paquetes" con icono `Package` de Lucide, link a `/profesional/paquetes`
     - _Requirements: 1.1_
 
-  - [~] 15.4 Actualizar sidebar admin — agregar links a configuración de paquetes
+  - [x] 15.4 Actualizar sidebar admin — agregar links a configuración de paquetes
     - Modificar `src/app/(admin)/admin/layout.tsx` o sidebar:
       - Agregar sub-items: "Paquetes" → `/admin/paquetes`, "Descuentos" → `/admin/configuracion/descuentos`, "Datos bancarios" → `/admin/configuracion/datos-bancarios`
     - _Requirements: 2.1, 5.4, 6.1_
 
-- [~] 16. Checkpoint final — Feature completo end-to-end
+- [x] 16. Checkpoint final — Feature completo end-to-end
   - Ensure all tests pass, ask the user if questions arise.
   - Verificar flujo completo: profesional crea paquete → paciente paga → webhook confirma → citas creadas
   - Verificar flujo bancario: profesional crea paquete → admin confirma → citas creadas

@@ -15,6 +15,7 @@
 import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/encryption';
 import { refreshAccessToken, createCalendarEvent } from '@/lib/google-oauth';
+import { sendPackageConfirmation } from '@/lib/emails/send-package-confirmation';
 import {
   calculateSessionDates,
   type Frequency,
@@ -140,4 +141,33 @@ export async function confirmPackage(packageId: string): Promise<void> {
       // Calendar events won't be created, but appointments are already confirmed
     }
   }
+
+  // 5. Send confirmation email to patient (fire-and-forget)
+  const frequencyLabels: Record<string, string> = {
+    weekly: 'Semanal',
+    biweekly: 'Quincenal',
+    monthly: 'Mensual',
+  };
+
+  // Refetch appointments to get any meetLinks that were just set
+  const updatedAppointments = await prisma.appointment.findMany({
+    where: { sessionPackageId: packageId },
+    orderBy: { date: 'asc' },
+  });
+
+  sendPackageConfirmation({
+    to: sessionPackage.patient.email,
+    patientName: sessionPackage.patient.preferredName || sessionPackage.patient.fullName,
+    professionalName: professional.name,
+    sessionCount: sessionPackage.sessionCount,
+    frequency: frequencyLabels[sessionPackage.frequency.toLowerCase()] || sessionPackage.frequency,
+    totalPrice: sessionPackage.totalPrice,
+    sessions: updatedAppointments.map((appt) => ({
+      date: appt.date.toISOString().split('T')[0],
+      startTime: appt.startTime,
+      meetLink: appt.meetLink,
+    })),
+  }).catch((err) => {
+    console.error(`[PackageConfirmer] Email notification failed for package ${packageId}:`, err);
+  });
 }
