@@ -1,12 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { getProfessionalSession } from '@/lib/get-professional-session';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const { error, professionalId } = await getProfessionalSession();
 
   if (error) return error;
+
+  const { searchParams } = new URL(request.url);
+  const eligible = searchParams.get('eligible');
+
+  // When eligible=packages, filter only patients with CONFIRMED/COMPLETED appointments
+  const appointmentStatusFilter =
+    eligible === 'packages'
+      ? { status: { in: ['CONFIRMED' as const, 'COMPLETED' as const] } }
+      : {};
 
   try {
     // Find patients that have at least one appointment with this professional
@@ -15,6 +24,7 @@ export async function GET() {
         appointments: {
           some: {
             professionalId,
+            ...appointmentStatusFilter,
           },
         },
       },
@@ -24,7 +34,7 @@ export async function GET() {
         preferredName: true,
         email: true,
         appointments: {
-          where: { professionalId },
+          where: { professionalId, ...appointmentStatusFilter },
           select: { date: true },
           orderBy: { date: 'desc' },
         },

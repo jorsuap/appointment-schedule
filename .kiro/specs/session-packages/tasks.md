@@ -209,7 +209,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Modo crear y editar (recibe tier opcional como prop)
     - _Requirements: 2.1_
 
-  - [~] 9.2 Crear `src/components/admin/packages/discount-tier-list.tsx`
+  - [x] 9.2 Crear `src/components/admin/packages/discount-tier-list.tsx`
     - Tabla con tramos: rango de sesiones, descuento por sesión, acciones (editar, eliminar)
     - Ordenado por minSessions ASC
     - _Requirements: 2.1_
@@ -222,7 +222,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - React Hook Form + Zod: bankName, accountType, accountNumber, accountHolder, alias, isActive toggle
     - _Requirements: 6.1_
 
-  - [~] 9.5 Crear `src/components/admin/packages/bank-details-list.tsx`
+  - [x] 9.5 Crear `src/components/admin/packages/bank-details-list.tsx`
     - Tabla con datos bancarios: banco, tipo, número, titular, alias, estado (activo/inactivo), acciones
     - _Requirements: 6.1, 6.3_
 
@@ -258,7 +258,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Navegación entre pasos (anterior/siguiente), validación por paso
     - _Requirements: 1.1, 3.6_
 
-  - [~] 12.2 Crear `src/components/professional/packages/step-patient-select.tsx`
+  - [x] 12.2 Crear `src/components/professional/packages/step-patient-select.tsx`
     - Paso 1: Selector de paciente elegible (búsqueda por nombre)
     - Fetch pacientes con al menos 1 cita CONFIRMED/COMPLETED con este profesional
     - _Requirements: 1.1, 1.3_
@@ -274,7 +274,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Preview de todas las fechas calculadas (client-side con misma lógica del scheduler)
     - _Requirements: 3.1, 3.6_
 
-  - [~] 12.5 Crear `src/components/professional/packages/step-payment-method.tsx`
+  - [x] 12.5 Crear `src/components/professional/packages/step-payment-method.tsx`
     - Paso 4: Radio buttons — Wompi Payment Link / Transferencia bancaria
     - Descripción breve de cada método
     - _Requirements: 4.1, 5.1_
