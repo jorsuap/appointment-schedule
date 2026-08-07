@@ -204,7 +204,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. UI Admin — Configuración de descuentos y datos bancarios
-  - [~] 9.1 Crear `src/components/admin/packages/discount-tier-form.tsx`
+  - [x] 9.1 Crear `src/components/admin/packages/discount-tier-form.tsx`
     - React Hook Form + Zod: minSessions, maxSessions, discountPerSession (en COP)
     - Modo crear y editar (recibe tier opcional como prop)
     - _Requirements: 2.1_
@@ -218,7 +218,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Renderiza DiscountTierList + DiscountTierForm (modal o inline)
     - _Requirements: 2.1_
 
-  - [~] 9.4 Crear `src/components/admin/packages/bank-details-form.tsx`
+  - [x] 9.4 Crear `src/components/admin/packages/bank-details-form.tsx`
     - React Hook Form + Zod: bankName, accountType, accountNumber, accountHolder, alias, isActive toggle
     - _Requirements: 6.1_
 
@@ -253,7 +253,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 12. UI Professional — Wizard de creación de paquetes
-  - [~] 12.1 Crear `src/components/professional/packages/package-wizard.tsx`
+  - [x] 12.1 Crear `src/components/professional/packages/package-wizard.tsx`
     - Wizard container multi-step (5 pasos) con estado controlado
     - Navegación entre pasos (anterior/siguiente), validación por paso
     - _Requirements: 1.1, 3.6_
