@@ -77,50 +77,50 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
 - [x] 2. Checkpoint — Schema y funciones puras implementadas
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 3. APIs de administración (Discount Tiers + Bank Details)
-  - [~] 3.1 Crear `src/app/api/admin/discount-tiers/route.ts` — GET + POST
+- [x] 3. APIs de administración (Discount Tiers + Bank Details)
+  - [x] 3.1 Crear `src/app/api/admin/discount-tiers/route.ts` — GET + POST
     - GET: Retornar todos los DiscountTier (ordenados por minSessions ASC)
     - POST: Validar con `discountTierSchema`, crear DiscountTier
     - Verificar sesión admin en ambos
     - _Requirements: 2.1_
 
-  - [~] 3.2 Crear `src/app/api/admin/discount-tiers/[id]/route.ts` — PUT + DELETE
+  - [x] 3.2 Crear `src/app/api/admin/discount-tiers/[id]/route.ts` — PUT + DELETE
     - PUT: Validar con `discountTierSchema`, actualizar DiscountTier
     - DELETE: Eliminar DiscountTier por ID
     - Cambios solo afectan paquetes futuros (no retroactivo — snapshot en SessionPackage)
     - _Requirements: 2.1, 2.6_
 
-  - [~] 3.3 Crear `src/app/api/admin/bank-details/route.ts` — GET + POST
+  - [x] 3.3 Crear `src/app/api/admin/bank-details/route.ts` — GET + POST
     - GET: Retornar todos los BankDetails (activos e inactivos para admin)
     - POST: Validar con `bankDetailsSchema`, crear BankDetails
     - _Requirements: 6.1, 6.2_
 
-  - [~] 3.4 Crear `src/app/api/admin/bank-details/[id]/route.ts` — PUT + DELETE
+  - [x] 3.4 Crear `src/app/api/admin/bank-details/[id]/route.ts` — PUT + DELETE
     - PUT: Validar con `bankDetailsSchema`, actualizar BankDetails (incluido toggle isActive)
     - DELETE: Eliminar BankDetails por ID
     - _Requirements: 6.1, 6.3_
 
-  - [~] 3.5 Crear `src/app/api/admin/packages/route.ts` — GET (admin view todos los paquetes)
+  - [x] 3.5 Crear `src/app/api/admin/packages/route.ts` — GET (admin view todos los paquetes)
     - Retornar todos los SessionPackage con filtros opcionales: `status`, `professionalId`, `patientId`
     - Include: professional.name, patient.fullName, servicio
     - _Requirements: 9.2_
 
-  - [~] 3.6 Crear `src/app/api/admin/packages/[id]/confirm/route.ts` — POST (confirmar pago bancario)
+  - [x] 3.6 Crear `src/app/api/admin/packages/[id]/confirm/route.ts` — POST (confirmar pago bancario)
     - Verificar que el paquete está en PENDING_PAYMENT y paymentMethod = BANK_TRANSFER
     - Ejecutar flujo de confirmación (delegar a Package Confirmer)
     - _Requirements: 5.3, 7.1_
 
-  - [~] 3.7 Crear `src/app/api/admin/packages/[id]/reject/route.ts` — POST (rechazar pago)
+  - [x] 3.7 Crear `src/app/api/admin/packages/[id]/reject/route.ts` — POST (rechazar pago)
     - Verificar que el paquete está en PENDING_PAYMENT
     - Cambiar estado a CANCELLED
     - _Requirements: 5.5_
 
-  - [~] 3.8 Crear `src/app/api/admin/packages/[id]/status/route.ts` — PUT (corrección admin)
+  - [x] 3.8 Crear `src/app/api/admin/packages/[id]/status/route.ts` — PUT (corrección admin)
     - Permitir cambiar estado a CONFIRMED, CANCELLED o PENDING_PAYMENT
     - Solo admin puede hacer esto (corrección de errores)
     - _Requirements: 9.5_
 
-- [~] 4. Checkpoint — APIs admin completas
+- [x] 4. Checkpoint — APIs admin completas
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 5. Package Confirmer y extensión del webhook Wompi
