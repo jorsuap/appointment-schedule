@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   createCalendarEvent as createCalendarEventOAuth,
 } from '@/lib/google-oauth';
+import { confirmPackage } from '@/lib/packages/package-confirmer';
 
 // POST /api/payments/webhook — Receive Wompi payment events
 export async function POST(request: NextRequest) {
@@ -28,6 +29,28 @@ export async function POST(request: NextRequest) {
 
     const reference = transaction.reference;
     const status = transaction.status; // APPROVED, DECLINED, VOIDED, ERROR
+
+    // ─── Package payment routing (PKG- prefix) ───
+    if (reference && reference.startsWith('PKG-')) {
+      const packageId = reference.slice(4); // Extract packageId from PKG-{packageId}
+
+      if (status === 'APPROVED') {
+        try {
+          await confirmPackage(packageId);
+          console.log(`[Webhook] Package ${packageId} confirmed via Wompi payment`);
+        } catch (err) {
+          // If packageId not found or confirmPackage fails, log and respond 200 (idempotency)
+          console.error(`[Webhook] Failed to confirm package ${packageId}:`, err);
+        }
+      } else {
+        // Non-APPROVED status: package stays PENDING_PAYMENT, no action needed
+        console.log(`[Webhook] Package ${packageId} payment status: ${status} — no action taken`);
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // ─── Individual appointment payment (existing logic, unchanged) ───
 
     // Find payment by reference
     const payment = await prisma.payment.findUnique({

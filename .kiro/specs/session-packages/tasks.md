@@ -123,8 +123,8 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
 - [x] 4. Checkpoint — APIs admin completas
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Package Confirmer y extensión del webhook Wompi
-  - [~] 5.1 Crear `src/lib/packages/package-confirmer.ts` — lógica de confirmación de paquete
+- [x] 5. Package Confirmer y extensión del webhook Wompi
+  - [x] 5.1 Crear `src/lib/packages/package-confirmer.ts` — lógica de confirmación de paquete
     - Implementar `confirmPackage(packageId)`:
       - Transacción Prisma: actualizar SessionPackage → CONFIRMED + crear N Appointments (CONFIRMED)
       - Usar Session Scheduler para obtener fechas
@@ -134,13 +134,13 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
       - Rate limit Calendar: 1 request/segundo (Promise secuencial con delay 1s)
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ]* 5.2 Write property test for package confirmer — Appointment creation
+  - [x]* 5.2 Write property test for package confirmer — Appointment creation
     - **Property 4: Package confirmation appointment creation**
     - Generadores: sessionCount (1-20), scheduled dates array
     - Verificar: exactamente N appointments creadas, cada una con datos correctos del paquete
     - **Validates: Requirements 7.1, 7.2**
 
-  - [~] 5.3 Extender `src/app/api/payments/webhook/route.ts` — routing PKG- references
+  - [x] 5.3 Extender `src/app/api/payments/webhook/route.ts` — routing PKG- references
     - Después de verificar firma WOMPI_EVENTS_SECRET:
       - Si reference empieza con `PKG-`: extraer packageId, delegar a `confirmPackage()`
       - Si reference NO empieza con `PKG-`: procesar como pago individual (lógica actual)
@@ -148,19 +148,19 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Si PKG- reference no encontrada en DB: responder 200 (idempotencia) + log warning
     - _Requirements: 8.4, 8.5, 8.6_
 
-  - [ ]* 5.4 Write property test for webhook routing — PKG- prefix routing
+  - [x]* 5.4 Write property test for webhook routing — PKG- prefix routing
     - **Property 6: Webhook PKG- routing**
     - Generadores: reference strings arbitrarias (con y sin prefijo PKG-)
     - Verificar: solo PKG- references se rutean a package processing
     - **Validates: Requirements 8.4**
 
-  - [ ]* 5.5 Write property test for webhook state preservation — Non-APPROVED preserves pending
+  - [x]* 5.5 Write property test for webhook state preservation — Non-APPROVED preserves pending
     - **Property 7: Non-APPROVED webhook preserves pending state**
     - Generadores: transaction statuses (DECLINED, VOIDED, ERROR)
     - Verificar: SessionPackage permanece en PENDING_PAYMENT
     - **Validates: Requirements 8.6**
 
-- [~] 6. Checkpoint — Confirmer y webhook funcionando
+- [x] 6. Checkpoint — Confirmer y webhook funcionando
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. APIs del portal profesional (Packages)
@@ -194,7 +194,7 @@ Stack: Next.js 16 App Router, TypeScript strict, Prisma 7, Neon PostgreSQL, Next
     - Cambiar estado a CANCELLED
     - _Requirements: 9.6, 9.7_
 
-  - [~] 7.5 Crear `src/app/api/professional/packages/calculate/route.ts` — POST (preview precio)
+  - [x] 7.5 Crear `src/app/api/professional/packages/calculate/route.ts` — POST (preview precio)
     - Recibir sessionCount + serviceId
     - Consultar ProfessionalTariff y DiscountTiers activos
     - Retornar preview: pricePerSession, discountPerSession, totalPrice, totalDiscount
