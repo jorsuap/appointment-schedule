@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
+  try {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
@@ -91,4 +92,15 @@ export default async function AdminDashboardPage() {
       </Card>
     </div>
   );
+  } catch (error) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold text-red-600">Error en Dashboard</h1>
+        <pre className="mt-4 overflow-auto rounded bg-red-50 p-4 text-sm text-red-800">
+          {error instanceof Error ? error.message : String(error)}
+          {error instanceof Error && error.stack ? '\n\n' + error.stack : ''}
+        </pre>
+      </div>
+    );
+  }
 }
