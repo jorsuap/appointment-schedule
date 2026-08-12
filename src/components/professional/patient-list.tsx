@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Search, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronRight, Search, UserPlus, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
@@ -29,6 +31,7 @@ interface PatientSummary {
  * Validates: Requirements 8.1
  */
 export function PatientList() {
+  const router = useRouter();
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,13 +82,22 @@ export function PatientList() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-grape sm:text-3xl">
-          Pacientes
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gestiona las fichas de tus pacientes
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-grape sm:text-3xl">
+            Pacientes
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gestiona las fichas de tus pacientes
+          </p>
+        </div>
+        <Button
+          onClick={() => router.push('/profesional/pacientes/nuevo')}
+          className="min-h-[44px] min-w-[44px] gap-2 px-4"
+        >
+          <UserPlus className="size-5" />
+          <span className="hidden sm:inline">Agregar Paciente</span>
+        </Button>
       </div>
 
       {/* Search */}
