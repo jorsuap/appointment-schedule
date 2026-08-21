@@ -59,6 +59,21 @@ export async function confirmPackage(packageId: string): Promise<void> {
     sessionPackage.frequency.toLowerCase() as Frequency,
   );
 
+  // Apply per-session time overrides if any
+  const overrides = (sessionPackage.sessionTimeOverrides as Record<string, string>) || {};
+  for (const [indexStr, overrideTime] of Object.entries(overrides)) {
+    const idx = parseInt(indexStr, 10);
+    if (idx >= 0 && idx < scheduledSessions.length && overrideTime) {
+      scheduledSessions[idx].startTime = overrideTime;
+      // Recalculate endTime for this session
+      const [h, m] = overrideTime.split(':').map(Number);
+      const service = await prisma.service.findUnique({ where: { id: sessionPackage.serviceId } });
+      const duration = service?.durationMin || 60;
+      const totalMin = h * 60 + m + duration;
+      scheduledSessions[idx].endTime = `${String(Math.floor(totalMin / 60) % 24).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
+    }
+  }
+
   // 3. Prisma transaction: update status + create appointments
   const createdAppointments = await prisma.$transaction(async (tx) => {
     // Update SessionPackage status to CONFIRMED
@@ -100,7 +115,10 @@ export async function confirmPackage(packageId: string): Promise<void> {
 
       for (const appointment of createdAppointments) {
         try {
-          const dateStr = appointment.date.toISOString().split('T')[0];
+          const year = appointment.date.getUTCFullYear();
+          const month = String(appointment.date.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(appointment.date.getUTCDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
           const startDateTime = `${dateStr}T${appointment.startTime}:00`;
           const endDateTime = `${dateStr}T${appointment.endTime}:00`;
 

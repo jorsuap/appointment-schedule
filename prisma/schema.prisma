@@ -342,6 +342,9 @@ model SessionPackage {
   wompiPaymentLinkUrl  String?
   wompiReference       String?          @unique
 
+  // Per-session time overrides (JSON: { "1": "14:00", "3": "16:00" })
+  sessionTimeOverrides Json?
+
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 

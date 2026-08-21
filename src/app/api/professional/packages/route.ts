@@ -94,6 +94,9 @@ export async function POST(request: NextRequest) {
     const { patientId, serviceId, sessionCount, frequency, startDate, startTime, paymentMethod } =
       parsed.data;
 
+    // Extract per-session time overrides (not validated by Zod, optional)
+    const sessionTimeOverrides: Record<string, string> = body.sessionTimeOverrides || {};
+
     // 2. Verify patient eligibility
     const eligibleAppointment = await prisma.appointment.findFirst({
       where: {
@@ -172,7 +175,7 @@ export async function POST(request: NextRequest) {
         serviceId,
         sessionCount,
         frequency: frequency.toUpperCase() as 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY',
-        startDate: new Date(startDate),
+        startDate: new Date(startDate + 'T12:00:00'),
         startTime,
         endTime,
         pricePerSession: tariff.price,
@@ -180,6 +183,7 @@ export async function POST(request: NextRequest) {
         totalPrice: priceResult.totalPrice,
         paymentMethod: paymentMethod === 'wompi' ? 'WOMPI' : 'BANK_TRANSFER',
         status: 'PENDING_PAYMENT',
+        sessionTimeOverrides: Object.keys(sessionTimeOverrides).length > 0 ? sessionTimeOverrides : undefined,
       },
       include: {
         patient: {
