@@ -13,8 +13,8 @@ const TIME_FORMAT_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
  * Validates: Requirements 1.4, 3.1
  */
 export const createPackageSchema = z.object({
-  patientId: z.string().cuid(),
-  serviceId: z.string().cuid(),
+  patientId: z.string().min(1),
+  serviceId: z.string().min(1),
   sessionCount: z.number().int().min(1, 'Mínimo 1 sesión'),
   frequency: z.enum(['weekly', 'biweekly', 'monthly']),
   startDate: z.string().date(),
