@@ -19,16 +19,19 @@ export async function GET(
   try {
     const { id: patientId } = await params;
 
-    // Verify this patient has at least one appointment with the current professional
-    const hasAppointment = await prisma.appointment.findFirst({
+    // Verify this patient belongs to the current professional (via appointments or manual creation)
+    const hasAccess = await prisma.patient.findFirst({
       where: {
-        patientId,
-        professionalId,
+        id: patientId,
+        OR: [
+          { appointments: { some: { professionalId } } },
+          { createdByProfessionalId: professionalId },
+        ],
       },
       select: { id: true },
     });
 
-    if (!hasAppointment) {
+    if (!hasAccess) {
       return NextResponse.json(
         { error: 'PATIENT_NOT_YOURS' },
         { status: 403 }
@@ -75,16 +78,19 @@ export async function POST(
   try {
     const { id: patientId } = await params;
 
-    // Verify this patient has at least one appointment with the current professional
-    const hasAppointment = await prisma.appointment.findFirst({
+    // Verify this patient belongs to the current professional (via appointments or manual creation)
+    const hasAccess = await prisma.patient.findFirst({
       where: {
-        patientId,
-        professionalId,
+        id: patientId,
+        OR: [
+          { appointments: { some: { professionalId } } },
+          { createdByProfessionalId: professionalId },
+        ],
       },
       select: { id: true },
     });
 
-    if (!hasAppointment) {
+    if (!hasAccess) {
       return NextResponse.json(
         { error: 'PATIENT_NOT_YOURS' },
         { status: 403 }

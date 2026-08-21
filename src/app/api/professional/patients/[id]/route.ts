@@ -14,31 +14,21 @@ export async function GET(
   try {
     const { id: patientId } = await params;
 
-    // Verify this patient has at least one appointment with the current professional
-    const hasAppointment = await prisma.appointment.findFirst({
+    // Verify this patient belongs to the current professional (via appointments or manual creation)
+    const patient = await prisma.patient.findFirst({
       where: {
-        patientId,
-        professionalId,
+        id: patientId,
+        OR: [
+          { appointments: { some: { professionalId } } },
+          { createdByProfessionalId: professionalId },
+        ],
       },
-      select: { id: true },
-    });
-
-    if (!hasAppointment) {
-      return NextResponse.json(
-        { error: 'PATIENT_NOT_YOURS' },
-        { status: 403 }
-      );
-    }
-
-    // Fetch full patient record
-    const patient = await prisma.patient.findUnique({
-      where: { id: patientId },
     });
 
     if (!patient) {
       return NextResponse.json(
-        { error: 'PATIENT_NOT_FOUND' },
-        { status: 404 }
+        { error: 'PATIENT_NOT_YOURS' },
+        { status: 403 }
       );
     }
 

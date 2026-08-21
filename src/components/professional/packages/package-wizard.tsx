@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StepPatientSelect } from './step-patient-select';
+import { StepSessionsConfig } from './step-sessions-config';
+import { StepSchedule } from './step-schedule';
+import { StepPaymentMethod } from './step-payment-method';
+import { StepSummary } from './step-summary';
 
 export interface WizardData {
   patientId: string;
@@ -41,7 +48,13 @@ const STEP_LABELS: Record<number, string> = {
  * Validates: Requirements 1.1, 3.6
  */
 export function PackageWizard() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [patientName, setPatientName] = useState('');
+  const [pricePerSession, setPricePerSession] = useState(0);
+  const [discountPerSession, setDiscountPerSession] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [wizardData, setWizardData] = useState<WizardData>({
     patientId: '',
     serviceId: '',
@@ -51,6 +64,25 @@ export function PackageWizard() {
     startTime: '',
     paymentMethod: 'wompi',
   });
+
+  // Auto-fetch the professional's first service to pre-populate serviceId
+  useEffect(() => {
+    async function fetchDefaultService() {
+      try {
+        const res = await fetch('/api/professional/services');
+        if (res.ok) {
+          const data = await res.json();
+          const services = data.services ?? data ?? [];
+          if (services.length > 0) {
+            setWizardData((prev) => ({ ...prev, serviceId: services[0].serviceId || services[0].id }));
+          }
+        }
+      } catch {
+        // Silent fail — user can still proceed if serviceId gets set later
+      }
+    }
+    fetchDefaultService();
+  }, []);
 
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS) {
@@ -66,6 +98,45 @@ export function PackageWizard() {
 
   const updateWizardData = (data: Partial<WizardData>) => {
     setWizardData((prev) => ({ ...prev, ...data }));
+  };
+
+  const canProceed = (): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!wizardData.patientId;
+      case 2:
+        return wizardData.sessionCount > 0 && !!wizardData.serviceId;
+      case 3:
+        return !!wizardData.startDate && !!wizardData.startTime;
+      case 4:
+        return !!wizardData.paymentMethod;
+      default:
+        return true;
+    }
+  };
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/professional/packages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(wizardData),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        toast.error(json.error || 'Error al crear el paquete');
+        return;
+      }
+
+      toast.success('Paquete creado exitosamente');
+      router.push('/profesional/paquetes');
+    } catch {
+      toast.error('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -90,38 +161,45 @@ export function PackageWizard() {
         {/* Step content */}
         <div className="min-h-[200px]">
           {currentStep === 1 && (
-            <StepPlaceholder
-              step={1}
-              label="PatientSelect"
-              wizardData={wizardData}
+            <StepPatientSelect
+              selectedPatientId={wizardData.patientId}
+              onSelect={(patientId) => updateWizardData({ patientId })}
             />
           )}
           {currentStep === 2 && (
-            <StepPlaceholder
-              step={2}
-              label="SessionsConfig"
-              wizardData={wizardData}
+            <StepSessionsConfig
+              sessionCount={wizardData.sessionCount}
+              serviceId={wizardData.serviceId}
+              onCountChange={(count) => updateWizardData({ sessionCount: count })}
+              onServiceChange={(id) => updateWizardData({ serviceId: id })}
             />
           )}
           {currentStep === 3 && (
-            <StepPlaceholder
-              step={3}
-              label="Schedule"
-              wizardData={wizardData}
+            <StepSchedule
+              startDate={wizardData.startDate}
+              startTime={wizardData.startTime}
+              frequency={wizardData.frequency}
+              sessionCount={wizardData.sessionCount}
+              onDateChange={(date) => updateWizardData({ startDate: date })}
+              onTimeChange={(time) => updateWizardData({ startTime: time })}
+              onFrequencyChange={(frequency) => updateWizardData({ frequency })}
             />
           )}
           {currentStep === 4 && (
-            <StepPlaceholder
-              step={4}
-              label="PaymentMethod"
-              wizardData={wizardData}
+            <StepPaymentMethod
+              selected={wizardData.paymentMethod}
+              onSelect={(method) => updateWizardData({ paymentMethod: method })}
             />
           )}
           {currentStep === 5 && (
-            <StepPlaceholder
-              step={5}
-              label="Summary"
+            <StepSummary
               wizardData={wizardData}
+              patientName={patientName}
+              pricePerSession={pricePerSession}
+              discountPerSession={discountPerSession}
+              totalPrice={totalPrice}
+              onConfirm={handleConfirm}
+              isSubmitting={isSubmitting}
             />
           )}
         </div>
@@ -139,38 +217,19 @@ export function PackageWizard() {
             <span className="hidden sm:inline">Anterior</span>
           </Button>
 
-          <Button
-            size="lg"
-            onClick={handleNext}
-            disabled={currentStep === TOTAL_STEPS}
-            className="min-h-[44px] min-w-[44px] bg-grape text-white hover:bg-grape/90"
-          >
-            <span className="hidden sm:inline">Siguiente</span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {currentStep < TOTAL_STEPS && (
+            <Button
+              size="lg"
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="min-h-[44px] min-w-[44px] bg-grape text-white hover:bg-grape/90"
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-/**
- * Placeholder component rendered for each step until actual step components
- * are implemented (tasks 12.2-12.6).
- */
-function StepPlaceholder({
-  step,
-  label,
-  wizardData: _wizardData,
-}: {
-  step: number;
-  label: string;
-  wizardData: WizardData;
-}) {
-  return (
-    <div className="flex min-h-[200px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-plum/30 bg-plum/5 p-6">
-      <p className="text-lg font-semibold text-grape">Paso {step}</p>
-      <p className="text-sm text-muted-foreground">{label}</p>
-    </div>
   );
 }

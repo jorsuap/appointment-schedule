@@ -19,15 +19,22 @@ export async function GET(request: NextRequest) {
       : {};
 
   try {
-    // Find patients that have at least one appointment with this professional
+    // Find patients linked to this professional via appointments OR manual creation
     const patients = await prisma.patient.findMany({
       where: {
-        appointments: {
-          some: {
-            professionalId,
-            ...appointmentStatusFilter,
+        OR: [
+          {
+            appointments: {
+              some: {
+                professionalId,
+                ...appointmentStatusFilter,
+              },
+            },
           },
-        },
+          {
+            createdByProfessionalId: professionalId,
+          },
+        ],
       },
       select: {
         id: true,
@@ -88,7 +95,7 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
 
   try {
-    // 3. Transaction: upsert patient + conditional appointment
+    // 3. Transaction: upsert patient with professional link
     const result = await prisma.$transaction(async (tx) => {
       const patient = await tx.patient.upsert({
         where: { email: data.email },
@@ -113,6 +120,7 @@ export async function POST(request: NextRequest) {
           dataPrivacyConsent: data.dataPrivacyConsent ?? false,
           commsConsent: data.commsConsent ?? false,
           informedConsent: data.informedConsent ?? false,
+          createdByProfessionalId: professionalId,
         },
         update: {
           fullName: data.fullName,
@@ -134,52 +142,16 @@ export async function POST(request: NextRequest) {
           dataPrivacyConsent: data.dataPrivacyConsent ?? false,
           commsConsent: data.commsConsent ?? false,
           informedConsent: data.informedConsent ?? false,
+          // Link to this professional if not already linked
+          createdByProfessionalId: professionalId,
         },
       });
 
-      // Check existing link (CONFIRMED or COMPLETED appointment with this professional)
-      const existingAppointment = await tx.appointment.findFirst({
-        where: {
-          patientId: patient.id,
-          professionalId,
-          status: { in: ['CONFIRMED', 'COMPLETED'] },
-        },
-      });
-
-      let appointmentCreated = false;
-
-      if (!existingAppointment) {
-        // Get first service from professional's configured services
-        const profService = await tx.professionalService.findFirst({
-          where: { professionalId },
-        });
-
-        if (!profService) {
-          throw new Error('NO_SERVICES');
-        }
-
-        await tx.appointment.create({
-          data: {
-            patientId: patient.id,
-            professionalId,
-            serviceId: profService.serviceId,
-            date: new Date(),
-            startTime: '00:00',
-            endTime: '00:01',
-            status: 'CONFIRMED',
-          },
-        });
-        appointmentCreated = true;
-      }
-
-      return { patient, appointmentCreated };
+      return { patient };
     });
 
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
-    if (err instanceof Error && err.message === 'NO_SERVICES') {
-      return NextResponse.json({ error: 'NO_SERVICES' }, { status: 400 });
-    }
     console.error('Patient POST error:', err);
     return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });
   }

@@ -140,6 +140,7 @@ model Professional {
   appointments   Appointment[]
   tariffs        ProfessionalTariff[]
   sessionPackages SessionPackage[]
+  manualPatients Patient[]            @relation("ManualPatients")
 
   @@map("professionals")
 }
@@ -229,9 +230,13 @@ model Patient {
   dataPrivacyConsent Boolean @default(false)
   commsConsent       Boolean @default(false)
 
+  // Manual creation link — professional who registered this patient manually
+  createdByProfessionalId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  createdByProfessional Professional? @relation("ManualPatients", fields: [createdByProfessionalId], references: [id])
   appointments  Appointment[]
   progressNotes ProgressNote[]
   sessionPackages SessionPackage[]
