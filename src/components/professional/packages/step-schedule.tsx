@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock, Repeat, AlertCircle, Pencil } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -46,17 +47,14 @@ function calculatePreviewDates(
   frequency: Frequency,
 ): string[] {
   if (!startDate || sessionCount < 1) return [];
-
   const intervalDays = FREQUENCY_DAYS[frequency];
   const dates: string[] = [];
   const start = new Date(startDate + 'T12:00:00');
-
   for (let i = 0; i < sessionCount; i++) {
     const d = new Date(start.getTime());
     d.setDate(d.getDate() + i * intervalDays);
     dates.push(d.toISOString().split('T')[0]);
   }
-
   return dates;
 }
 
@@ -68,8 +66,7 @@ const dateFormatter = new Intl.DateTimeFormat('es-CO', {
 });
 
 /**
- * Step 3 of the package wizard — Schedule with real availability.
- * Supports per-session time override for conflict resolution.
+ * Step 3 — Schedule with calendar date picker and real availability.
  */
 export function StepSchedule({
   startDate,
@@ -88,45 +85,47 @@ export function StepSchedule({
   const [error, setError] = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<number | null>(null);
 
-  // Fetch availability on mount
   useEffect(() => {
     if (!serviceId) return;
-
     async function fetchSlots() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(
-          `/api/professional/availability/slots?serviceId=${serviceId}`,
-        );
+        const res = await fetch(`/api/professional/availability/slots?serviceId=${serviceId}`);
         if (!res.ok) throw new Error('Error al cargar disponibilidad');
         const data = await res.json();
         setSlots(data.slots ?? {});
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Error al cargar disponibilidad',
-        );
+        setError(err instanceof Error ? err.message : 'Error al cargar disponibilidad');
       } finally {
         setLoading(false);
       }
     }
-
     fetchSlots();
   }, [serviceId]);
 
-  const availableDates = useMemo(() => Object.keys(slots).sort(), [slots]);
+  // Set of available date strings for quick lookup
+  const availableDateSet = useMemo(() => new Set(Object.keys(slots)), [slots]);
 
+  // Convert selected date string to Date for Calendar
+  const selectedDate = useMemo(
+    () => (startDate ? new Date(startDate + 'T12:00:00') : undefined),
+    [startDate],
+  );
+
+  // Time slots for the selected date
   const timeSlots = useMemo(
     () => (startDate && slots[startDate]) || [],
     [startDate, slots],
   );
 
+  // Preview dates
   const previewDates = useMemo(
     () => calculatePreviewDates(startDate, sessionCount, frequency),
     [startDate, sessionCount, frequency],
   );
 
-  // Check availability for each session, considering overrides
+  // Availability check per session
   const dateAvailability = useMemo(() => {
     return previewDates.map((dateStr, idx) => {
       const sessionTime = sessionTimeOverrides[idx] || startTime;
@@ -158,7 +157,7 @@ export function StepSchedule({
     );
   }
 
-  if (availableDates.length === 0) {
+  if (availableDateSet.size === 0) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-plum/20 p-6">
         <AlertCircle className="h-8 w-8 text-muted-foreground" />
@@ -171,27 +170,35 @@ export function StepSchedule({
 
   return (
     <div className="space-y-5">
-      {/* Date selection */}
+      {/* Calendar date picker */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium text-grape">
           <CalendarDays className="h-4 w-4 text-plum" />
           Fecha de inicio
         </label>
-        <Select value={startDate} onValueChange={(v) => { if (v) onDateChange(v); }}>
-          <SelectTrigger className="text-base">
-            <SelectValue placeholder="Selecciona una fecha disponible" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {availableDates.map((dateStr) => {
-              const d = new Date(dateStr + 'T12:00:00');
-              return (
-                <SelectItem key={dateStr} value={dateStr} className="text-sm">
-                  {dateFormatter.format(d)} ({slots[dateStr].length} horarios)
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        <div className="flex justify-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              if (date) {
+                const isoDate = date.toISOString().split('T')[0];
+                onDateChange(isoDate);
+              }
+            }}
+            disabled={(date) => {
+              const dateStr = date.toISOString().split('T')[0];
+              return !availableDateSet.has(dateStr);
+            }}
+            defaultMonth={selectedDate || new Date()}
+            className="rounded-xl border border-border"
+          />
+        </div>
+        {startDate && (
+          <p className="text-center text-xs text-muted-foreground">
+            {dateFormatter.format(new Date(startDate + 'T12:00:00'))} — {timeSlots.length} horarios disponibles
+          </p>
+        )}
       </div>
 
       {/* Time selection */}
@@ -226,10 +233,7 @@ export function StepSchedule({
           <Repeat className="h-4 w-4 text-plum" />
           Frecuencia
         </label>
-        <Select
-          value={frequency}
-          onValueChange={(v) => { if (v) onFrequencyChange(v as Frequency); }}
-        >
+        <Select value={frequency} onValueChange={(v) => { if (v) onFrequencyChange(v as Frequency); }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -243,7 +247,7 @@ export function StepSchedule({
         </Select>
       </div>
 
-      {/* Session preview with per-session override */}
+      {/* Session preview — pencil ONLY on conflict sessions */}
       {startDate && startTime && dateAvailability.length > 0 && (
         <Card className="border-plum/30 bg-plum/5">
           <CardContent className="p-4">
@@ -251,7 +255,7 @@ export function StepSchedule({
               Sesiones programadas ({dateAvailability.length})
             </p>
 
-            <div className="max-h-[320px] space-y-1.5 overflow-y-auto pr-1">
+            <div className="max-h-[280px] space-y-1.5 overflow-y-auto pr-1">
               {dateAvailability.map((item, idx) => {
                 const d = new Date(item.date + 'T12:00:00');
                 const isEditing = editingSession === idx;
@@ -259,7 +263,7 @@ export function StepSchedule({
                 const hasOverride = sessionTimeOverrides[idx] !== undefined;
 
                 return (
-                  <div key={idx} className="space-y-0">
+                  <div key={idx}>
                     <div
                       className={`flex items-center gap-3 rounded-md px-3 py-2 ${
                         item.available ? 'bg-white/60' : 'bg-red-50'
@@ -281,27 +285,23 @@ export function StepSchedule({
                         {item.time}
                       </span>
 
-                      {/* Edit button for sessions with conflicts OR any session */}
+                      {/* Pencil ONLY for sessions with conflict */}
                       {!item.available && daySlotsForEdit.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setEditingSession(isEditing ? null : idx)}
-                          className="rounded-md p-1 text-grape hover:bg-plum/20"
-                          title="Cambiar hora"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-
-                      {item.available && idx > 0 && daySlotsForEdit.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setEditingSession(isEditing ? null : idx)}
-                          className="rounded-md p-1 text-muted-foreground hover:bg-plum/20 hover:text-grape"
-                          title="Cambiar hora"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setEditingSession(isEditing ? null : idx)}
+                            className="rounded-md p-1 text-grape hover:bg-plum/20"
+                            title="Cambiar hora"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          {!isEditing && (
+                            <Badge className="bg-red-100 text-[10px] text-red-600 hover:bg-red-100">
+                              {item.reason}
+                            </Badge>
+                          )}
+                        </>
                       )}
 
                       {!item.available && daySlotsForEdit.length === 0 && (
@@ -309,19 +309,13 @@ export function StepSchedule({
                           {item.reason}
                         </Badge>
                       )}
-
-                      {!item.available && daySlotsForEdit.length > 0 && !isEditing && (
-                        <Badge className="bg-red-100 text-[10px] text-red-600 hover:bg-red-100">
-                          {item.reason}
-                        </Badge>
-                      )}
                     </div>
 
-                    {/* Inline time picker for this session */}
+                    {/* Inline time picker for conflict resolution */}
                     {isEditing && (
                       <div className="ml-10 mt-1 mb-1 rounded-md border border-plum/20 bg-white p-2">
                         <p className="mb-2 text-xs text-muted-foreground">
-                          Horarios disponibles para este día:
+                          Horarios disponibles:
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {daySlotsForEdit.map((time) => (
@@ -352,7 +346,7 @@ export function StepSchedule({
             {dateAvailability.some((d) => !d.available) && (
               <p className="mt-3 flex items-center gap-1 text-xs text-amber-600">
                 <AlertCircle className="h-3 w-3" />
-                Haz click en el ícono de lápiz para cambiar la hora de las sesiones con conflicto.
+                Haz click en el lápiz para cambiar la hora de las sesiones con conflicto.
               </p>
             )}
           </CardContent>
@@ -361,7 +355,7 @@ export function StepSchedule({
 
       {!startDate && (
         <p className="text-center text-xs text-muted-foreground">
-          Selecciona una fecha para ver los horarios disponibles
+          Selecciona una fecha en el calendario para ver los horarios disponibles
         </p>
       )}
     </div>
