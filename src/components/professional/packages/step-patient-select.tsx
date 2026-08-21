@@ -17,7 +17,7 @@ interface EligiblePatient {
 
 interface StepPatientSelectProps {
   selectedPatientId?: string;
-  onSelect: (patientId: string) => void;
+  onSelect: (patientId: string, patientName?: string) => void;
 }
 
 /**
@@ -129,13 +129,13 @@ export function StepPatientSelect({
                     ? 'border-grape bg-plum/10 ring-2 ring-grape/30'
                     : 'hover:border-plum/50 hover:bg-plum/5'
                 }`}
-                onClick={() => onSelect(patient.id)}
+                onClick={() => onSelect(patient.id, patient.fullName)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    onSelect(patient.id);
+                    onSelect(patient.id, patient.fullName);
                   }
                 }}
                 aria-pressed={isSelected}

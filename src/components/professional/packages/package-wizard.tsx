@@ -87,8 +87,29 @@ export function PackageWizard() {
     fetchDefaultService();
   }, []);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < TOTAL_STEPS) {
+      // When moving to summary (step 5), fetch price data
+      if (currentStep === 4) {
+        try {
+          const res = await fetch('/api/professional/packages/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionCount: wizardData.sessionCount,
+              serviceId: wizardData.serviceId,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setPricePerSession(data.pricePerSession ?? 0);
+            setDiscountPerSession(data.discountPerSession ?? 0);
+            setTotalPrice(data.totalPrice ?? 0);
+          }
+        } catch {
+          // Silent — summary will show 0 if fetch fails
+        }
+      }
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -166,7 +187,10 @@ export function PackageWizard() {
           {currentStep === 1 && (
             <StepPatientSelect
               selectedPatientId={wizardData.patientId}
-              onSelect={(patientId) => updateWizardData({ patientId })}
+              onSelect={(patientId, name) => {
+                updateWizardData({ patientId });
+                if (name) setPatientName(name);
+              }}
             />
           )}
           {currentStep === 2 && (
