@@ -29,22 +29,34 @@ export async function POST(request: NextRequest) {
 
     const reference = transaction.reference;
     const status = transaction.status; // APPROVED, DECLINED, VOIDED, ERROR
+    const paymentLinkId = transaction.payment_link_id;
 
-    // ─── Package payment routing (PKG- prefix) ───
-    if (reference && reference.startsWith('PKG-')) {
-      const packageId = reference.slice(4); // Extract packageId from PKG-{packageId}
+    // ─── Package payment routing (via payment_link_id OR PKG- prefix) ───
+    if (paymentLinkId || (reference && reference.startsWith('PKG-'))) {
+      let packageId: string | null = null;
 
-      if (status === 'APPROVED') {
+      if (reference && reference.startsWith('PKG-')) {
+        packageId = reference.slice(4);
+      } else if (paymentLinkId) {
+        // Find package by wompiPaymentLinkId
+        const pkg = await prisma.sessionPackage.findFirst({
+          where: { wompiPaymentLinkId: paymentLinkId },
+          select: { id: true },
+        });
+        if (pkg) packageId = pkg.id;
+      }
+
+      if (packageId && status === 'APPROVED') {
         try {
           await confirmPackage(packageId);
           console.log(`[Webhook] Package ${packageId} confirmed via Wompi payment`);
         } catch (err) {
-          // If packageId not found or confirmPackage fails, log and respond 200 (idempotency)
           console.error(`[Webhook] Failed to confirm package ${packageId}:`, err);
         }
-      } else {
-        // Non-APPROVED status: package stays PENDING_PAYMENT, no action needed
+      } else if (packageId) {
         console.log(`[Webhook] Package ${packageId} payment status: ${status} — no action taken`);
+      } else {
+        console.warn(`[Webhook] Could not find package for paymentLinkId=${paymentLinkId} ref=${reference}`);
       }
 
       return NextResponse.json({ received: true });
