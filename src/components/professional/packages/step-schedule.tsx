@@ -180,7 +180,7 @@ export function StepSchedule({
           <CalendarDays className="h-4 w-4 text-plum" />
           Fecha de inicio
         </label>
-        <Select value={startDate} onValueChange={onDateChange}>
+        <Select value={startDate} onValueChange={(v) => { if (v) onDateChange(v); }}>
           <SelectTrigger className="text-base">
             <SelectValue placeholder="Selecciona una fecha disponible" />
           </SelectTrigger>
