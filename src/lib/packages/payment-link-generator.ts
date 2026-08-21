@@ -81,9 +81,13 @@ export async function createWompiPaymentLink(
 
       const data = await response.json();
 
+      const linkId = data.data.id;
+      // Wompi may not return url directly in sandbox — construct it from linkId
+      const linkUrl = data.data.url || `https://checkout.wompi.co/l/${linkId}`;
+
       return {
-        linkId: data.data.id,
-        linkUrl: data.data.url,
+        linkId,
+        linkUrl,
       };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
