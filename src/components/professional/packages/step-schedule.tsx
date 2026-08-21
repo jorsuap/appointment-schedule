@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock, Repeat, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, Repeat, AlertCircle, Pencil } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,9 +21,11 @@ interface StepScheduleProps {
   frequency: Frequency;
   sessionCount: number;
   serviceId: string;
+  sessionTimeOverrides: Record<number, string>;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
   onFrequencyChange: (frequency: Frequency) => void;
+  onSessionTimeOverride: (sessionIndex: number, time: string) => void;
 }
 
 const FREQUENCY_OPTIONS: { value: Frequency; label: string; days: number }[] = [
@@ -66,11 +68,8 @@ const dateFormatter = new Intl.DateTimeFormat('es-CO', {
 });
 
 /**
- * Step 3 of the package wizard — Schedule configuration with real availability.
- * Fetches available slots from /api/professional/availability/slots.
- * Shows only dates with availability and time slots for the selected date.
- *
- * Validates: Requirements 3.1, 3.6
+ * Step 3 of the package wizard — Schedule with real availability.
+ * Supports per-session time override for conflict resolution.
  */
 export function StepSchedule({
   startDate,
@@ -78,13 +77,16 @@ export function StepSchedule({
   frequency,
   sessionCount,
   serviceId,
+  sessionTimeOverrides,
   onDateChange,
   onTimeChange,
   onFrequencyChange,
+  onSessionTimeOverride,
 }: StepScheduleProps) {
   const [slots, setSlots] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingSession, setEditingSession] = useState<number | null>(null);
 
   // Fetch availability on mount
   useEffect(() => {
@@ -112,41 +114,37 @@ export function StepSchedule({
     fetchSlots();
   }, [serviceId]);
 
-  // Available dates (keys of slots object)
   const availableDates = useMemo(() => Object.keys(slots).sort(), [slots]);
 
-  // Time slots for the selected date
   const timeSlots = useMemo(
     () => (startDate && slots[startDate]) || [],
     [startDate, slots],
   );
 
-  // Preview of all session dates
   const previewDates = useMemo(
     () => calculatePreviewDates(startDate, sessionCount, frequency),
     [startDate, sessionCount, frequency],
   );
 
-  // Check which preview dates have availability at the selected time
+  // Check availability for each session, considering overrides
   const dateAvailability = useMemo(() => {
-    return previewDates.map((dateStr) => {
+    return previewDates.map((dateStr, idx) => {
+      const sessionTime = sessionTimeOverrides[idx] || startTime;
       const daySlots = slots[dateStr];
-      if (!daySlots) return { date: dateStr, available: false, reason: 'Sin disponibilidad' };
-      if (!startTime) return { date: dateStr, available: true, reason: '' };
-      if (!daySlots.includes(startTime))
-        return { date: dateStr, available: false, reason: 'Hora ocupada' };
-      return { date: dateStr, available: true, reason: '' };
+      if (!daySlots) return { date: dateStr, time: sessionTime, available: false, reason: 'Sin disponibilidad' };
+      if (!sessionTime) return { date: dateStr, time: sessionTime, available: true, reason: '' };
+      if (!daySlots.includes(sessionTime))
+        return { date: dateStr, time: sessionTime, available: false, reason: 'Hora ocupada' };
+      return { date: dateStr, time: sessionTime, available: true, reason: '' };
     });
-  }, [previewDates, slots, startTime]);
+  }, [previewDates, slots, startTime, sessionTimeOverrides]);
 
   if (loading) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-plum border-t-grape" />
-          <p className="text-sm text-muted-foreground">
-            Cargando disponibilidad...
-          </p>
+          <p className="text-sm text-muted-foreground">Cargando disponibilidad...</p>
         </div>
       </div>
     );
@@ -165,8 +163,7 @@ export function StepSchedule({
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-plum/20 p-6">
         <AlertCircle className="h-8 w-8 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          No hay disponibilidad configurada. Configura tu horario en la sección
-          de Disponibilidad.
+          No hay disponibilidad configurada. Configura tu horario en Disponibilidad.
         </p>
       </div>
     );
@@ -197,7 +194,7 @@ export function StepSchedule({
         </Select>
       </div>
 
-      {/* Time selection — only show when date is selected */}
+      {/* Time selection */}
       {startDate && timeSlots.length > 0 && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-medium text-grape">
@@ -223,12 +220,6 @@ export function StepSchedule({
         </div>
       )}
 
-      {startDate && timeSlots.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No hay horarios disponibles para esta fecha.
-        </p>
-      )}
-
       {/* Frequency */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium text-grape">
@@ -237,9 +228,7 @@ export function StepSchedule({
         </label>
         <Select
           value={frequency}
-          onValueChange={(v) => {
-            if (v) onFrequencyChange(v as Frequency);
-          }}
+          onValueChange={(v) => { if (v) onFrequencyChange(v as Frequency); }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -254,7 +243,7 @@ export function StepSchedule({
         </Select>
       </div>
 
-      {/* Preview of scheduled dates with availability check */}
+      {/* Session preview with per-session override */}
       {startDate && startTime && dateAvailability.length > 0 && (
         <Card className="border-plum/30 bg-plum/5">
           <CardContent className="p-4">
@@ -262,35 +251,98 @@ export function StepSchedule({
               Sesiones programadas ({dateAvailability.length})
             </p>
 
-            <div className="max-h-[240px] space-y-1.5 overflow-y-auto pr-1">
+            <div className="max-h-[320px] space-y-1.5 overflow-y-auto pr-1">
               {dateAvailability.map((item, idx) => {
                 const d = new Date(item.date + 'T12:00:00');
+                const isEditing = editingSession === idx;
+                const daySlotsForEdit = slots[item.date] || [];
+                const hasOverride = sessionTimeOverrides[idx] !== undefined;
+
                 return (
-                  <div
-                    key={idx}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2 ${
-                      item.available ? 'bg-white/60' : 'bg-red-50'
-                    }`}
-                  >
-                    <Badge
-                      className={`shrink-0 ${
-                        item.available
-                          ? 'bg-grape/10 text-grape hover:bg-grape/10'
-                          : 'bg-red-100 text-red-600 hover:bg-red-100'
+                  <div key={idx} className="space-y-0">
+                    <div
+                      className={`flex items-center gap-3 rounded-md px-3 py-2 ${
+                        item.available ? 'bg-white/60' : 'bg-red-50'
                       }`}
                     >
-                      {idx + 1}
-                    </Badge>
-                    <span className="text-sm text-foreground">
-                      {dateFormatter.format(d)}
-                    </span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {startTime}
-                    </span>
-                    {!item.available && (
-                      <Badge className="bg-red-100 text-[10px] text-red-600 hover:bg-red-100">
-                        {item.reason}
+                      <Badge
+                        className={`shrink-0 ${
+                          item.available
+                            ? 'bg-grape/10 text-grape hover:bg-grape/10'
+                            : 'bg-red-100 text-red-600 hover:bg-red-100'
+                        }`}
+                      >
+                        {idx + 1}
                       </Badge>
+                      <span className="text-sm text-foreground">
+                        {dateFormatter.format(d)}
+                      </span>
+                      <span className={`ml-auto text-xs ${hasOverride ? 'font-semibold text-grape' : 'text-muted-foreground'}`}>
+                        {item.time}
+                      </span>
+
+                      {/* Edit button for sessions with conflicts OR any session */}
+                      {!item.available && daySlotsForEdit.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingSession(isEditing ? null : idx)}
+                          className="rounded-md p-1 text-grape hover:bg-plum/20"
+                          title="Cambiar hora"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+
+                      {item.available && idx > 0 && daySlotsForEdit.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingSession(isEditing ? null : idx)}
+                          className="rounded-md p-1 text-muted-foreground hover:bg-plum/20 hover:text-grape"
+                          title="Cambiar hora"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+
+                      {!item.available && daySlotsForEdit.length === 0 && (
+                        <Badge className="bg-red-100 text-[10px] text-red-600 hover:bg-red-100">
+                          {item.reason}
+                        </Badge>
+                      )}
+
+                      {!item.available && daySlotsForEdit.length > 0 && !isEditing && (
+                        <Badge className="bg-red-100 text-[10px] text-red-600 hover:bg-red-100">
+                          {item.reason}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Inline time picker for this session */}
+                    {isEditing && (
+                      <div className="ml-10 mt-1 mb-1 rounded-md border border-plum/20 bg-white p-2">
+                        <p className="mb-2 text-xs text-muted-foreground">
+                          Horarios disponibles para este día:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {daySlotsForEdit.map((time) => (
+                            <button
+                              key={time}
+                              type="button"
+                              onClick={() => {
+                                onSessionTimeOverride(idx, time);
+                                setEditingSession(null);
+                              }}
+                              className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all ${
+                                item.time === time
+                                  ? 'border-grape bg-grape text-white'
+                                  : 'border-border bg-white text-foreground hover:border-plum hover:bg-plum/5'
+                              }`}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -300,7 +352,7 @@ export function StepSchedule({
             {dateAvailability.some((d) => !d.available) && (
               <p className="mt-3 flex items-center gap-1 text-xs text-amber-600">
                 <AlertCircle className="h-3 w-3" />
-                Algunas sesiones tienen conflictos. Considera cambiar la frecuencia o la hora.
+                Haz click en el ícono de lápiz para cambiar la hora de las sesiones con conflicto.
               </p>
             )}
           </CardContent>

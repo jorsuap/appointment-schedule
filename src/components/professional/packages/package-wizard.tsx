@@ -22,6 +22,8 @@ export interface WizardData {
   startDate: string;
   startTime: string;
   paymentMethod: 'wompi' | 'bank_transfer';
+  /** Per-session time overrides: key = session index (0-based), value = custom time */
+  sessionTimeOverrides: Record<number, string>;
 }
 
 const TOTAL_STEPS = 5;
@@ -63,6 +65,7 @@ export function PackageWizard() {
     startDate: '',
     startTime: '',
     paymentMethod: 'wompi',
+    sessionTimeOverrides: {},
   });
 
   // Auto-fetch the professional's first service to pre-populate serviceId
@@ -181,9 +184,15 @@ export function PackageWizard() {
               frequency={wizardData.frequency}
               sessionCount={wizardData.sessionCount}
               serviceId={wizardData.serviceId}
+              sessionTimeOverrides={wizardData.sessionTimeOverrides}
               onDateChange={(date) => updateWizardData({ startDate: date })}
-              onTimeChange={(time) => updateWizardData({ startTime: time })}
-              onFrequencyChange={(frequency) => updateWizardData({ frequency })}
+              onTimeChange={(time) => updateWizardData({ startTime: time, sessionTimeOverrides: {} })}
+              onFrequencyChange={(frequency) => updateWizardData({ frequency, sessionTimeOverrides: {} })}
+              onSessionTimeOverride={(idx, time) =>
+                updateWizardData({
+                  sessionTimeOverrides: { ...wizardData.sessionTimeOverrides, [idx]: time },
+                })
+              }
             />
           )}
           {currentStep === 4 && (
