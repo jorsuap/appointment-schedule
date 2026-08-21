@@ -53,7 +53,7 @@ function calculatePreviewDates(
   for (let i = 0; i < sessionCount; i++) {
     const d = new Date(start.getTime());
     d.setDate(d.getDate() + i * intervalDays);
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(toLocalDateStr(d));
   }
   return dates;
 }
@@ -64,6 +64,16 @@ const dateFormatter = new Intl.DateTimeFormat('es-CO', {
   month: 'short',
   year: 'numeric',
 });
+
+/**
+ * Format a Date to YYYY-MM-DD in local timezone (avoids UTC shift issues).
+ */
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 /**
  * Step 3 — Schedule with calendar date picker and real availability.
@@ -182,12 +192,12 @@ export function StepSchedule({
             selected={selectedDate}
             onSelect={(date) => {
               if (date) {
-                const isoDate = date.toISOString().split('T')[0];
+                const isoDate = toLocalDateStr(date);
                 onDateChange(isoDate);
               }
             }}
             disabled={(date) => {
-              const dateStr = date.toISOString().split('T')[0];
+              const dateStr = toLocalDateStr(date);
               return !availableDateSet.has(dateStr);
             }}
             defaultMonth={selectedDate || new Date()}
