@@ -180,6 +180,7 @@ export function PackageWizard() {
               startTime={wizardData.startTime}
               frequency={wizardData.frequency}
               sessionCount={wizardData.sessionCount}
+              serviceId={wizardData.serviceId}
               onDateChange={(date) => updateWizardData({ startDate: date })}
               onTimeChange={(time) => updateWizardData({ startTime: time })}
               onFrequencyChange={(frequency) => updateWizardData({ frequency })}

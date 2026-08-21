@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Video, CalendarCheck, CalendarX } from 'lucide-react';
 import { LinkButton } from '@/components/ui/link-button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +52,7 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <Avatar className="h-16 w-16">
+            <AvatarImage src={professional.photoUrl || undefined} alt={professional.name} />
             <AvatarFallback className="bg-plum/20 text-lg font-semibold text-grape">
               {initials}
             </AvatarFallback>

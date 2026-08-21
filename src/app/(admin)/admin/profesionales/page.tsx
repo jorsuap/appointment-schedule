@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, ChevronRight, ToggleRight, X, Copy, Check, Eye, EyeOff } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +18,7 @@ interface Professional {
   name: string;
   specialty: string;
   email: string;
+  photoUrl: string | null;
   isActive: boolean;
   traits: string[];
   services: { service: { id: string; name: string } }[];
@@ -158,6 +159,7 @@ export default function ProfesionalesPage() {
               <Card className="cursor-pointer border-border/40 py-0 transition-all hover:border-plum hover:shadow-sm">
                 <CardContent className="flex items-center gap-4 p-4 sm:p-5">
                   <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarImage src={pro.photoUrl || undefined} alt={pro.name} />
                     <AvatarFallback className="bg-plum/20 font-semibold text-grape">
                       {initials}
                     </AvatarFallback>
