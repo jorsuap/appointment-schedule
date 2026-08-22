@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -9,7 +9,6 @@ import { CalendarDays, Clock, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -25,14 +24,8 @@ import { useBookingStore } from '@/stores/booking-store';
 const confirmarSchema = z.object({
   payerName: z.string().min(3, 'Ingresa tu nombre completo'),
   payerEmail: z.string().email('Ingresa un correo electrónico válido'),
-  timezoneConfirm: z.boolean().refine((v) => v === true, {
-    message: 'Confirma tu zona horaria',
-  }),
   consentimiento: z.boolean().refine((v) => v === true, {
     message: 'Debes aceptar el consentimiento informado',
-  }),
-  commsAuthorization: z.boolean().refine((v) => v === true, {
-    message: 'Debes autorizar las comunicaciones transaccionales',
   }),
 });
 
@@ -54,9 +47,7 @@ export default function ConfirmarPage() {
     defaultValues: {
       payerName: bookingStore.patientData?.fullName || '',
       payerEmail: bookingStore.patientData?.email || '',
-      timezoneConfirm: false,
       consentimiento: false,
-      commsAuthorization: false,
     },
   });
 
@@ -125,7 +116,8 @@ export default function ConfirmarPage() {
       wompiUrl.searchParams.set('customer-data:email', paymentData.customerEmail);
       wompiUrl.searchParams.set('customer-data:full-name', paymentData.customerName);
 
-      window.location.href = wompiUrl.toString();
+      const redirectUrl = wompiUrl.toString();
+      setTimeout(() => { location.assign(redirectUrl); }, 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
       setIsSubmitting(false);
@@ -205,24 +197,6 @@ export default function ConfirmarPage() {
 
             <FormField
               control={form.control}
-              name="timezoneConfirm"
-              render={({ field }) => (
-                <FormItem className="flex gap-3 space-y-0">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mt-1 h-5 w-5 shrink-0 border-grape bg-white" />
-                  </FormControl>
-                  <div className="flex-1">
-                    <Label className="cursor-pointer text-sm font-normal leading-relaxed">
-                      Confirmo que mi zona horaria está correcta en el agendamiento de mi sesión.
-                    </Label>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="consentimiento"
               render={({ field }) => (
                 <FormItem className="flex gap-3 space-y-0">
@@ -232,28 +206,14 @@ export default function ConfirmarPage() {
                   <div className="flex-1">
                     <p className="text-sm font-normal leading-relaxed">
                       Confirmo que he leído y acepto el{' '}
-                      <a href="/consentimiento" target="_blank" className="font-medium text-grape underline">
+                      <a href="/consentimiento-informado" target="_blank" className="font-medium text-grape underline">
                         Consentimiento Informado de conAlma
                       </a>
-                      , incluyendo el tratamiento de mis datos personales conforme a la ley, así como su política de cancelación: las sesiones deben cancelarse con al menos 8 horas de anticipación para recibir reembolso.
-                    </p>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="commsAuthorization"
-              render={({ field }) => (
-                <FormItem className="flex gap-3 space-y-0">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mt-1 h-5 w-5 shrink-0 border-grape bg-white" />
-                  </FormControl>
-                  <div className="flex-1">
-                    <p className="text-sm font-normal leading-relaxed">
-                      Autorizo a <strong>conAlma</strong> a enviarme comunicaciones transaccionales relacionadas con el servicio. Puedo responder STOP en cualquier momento.
+                      , incluyendo el tratamiento de mis datos personales conforme a la{' '}
+                      <a href="/politica-datos" target="_blank" className="font-medium text-grape underline">
+                        política de tratamiento de datos
+                      </a>
+                      , así como la política de cancelación: las sesiones deben cancelarse con al menos 8 horas de anticipación para recibir reembolso.
                     </p>
                     <FormMessage />
                   </div>

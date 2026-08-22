@@ -248,6 +248,21 @@ export function PatientDetail({ patientId }: PatientDetailProps) {
         </CardContent>
       </Card>
 
+      {/* Consentimientos */}
+      <Card className="border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base text-grape">
+            <Shield className="h-4 w-4 text-plum" />
+            Consentimientos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ConsentRow label="Política de tratamiento de datos" accepted={patient.dataPrivacyConsent} />
+          <ConsentRow label="Consentimiento informado" accepted={patient.informedConsent} />
+          <ConsentRow label="Comunicaciones transaccionales" accepted={patient.commsConsent} />
+        </CardContent>
+      </Card>
+
       {/* Appointment History */}
       <Card className="border-border/40">
         <CardHeader className="pb-3">
@@ -305,6 +320,17 @@ function InfoField({
     <div>
       <span className="text-muted-foreground">{label}:</span>{' '}
       <span className="font-medium">{value || '—'}</span>
+    </div>
+  );
+}
+
+function ConsentRow({ label, accepted }: { label: string; accepted: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
+      <span className="text-sm">{label}</span>
+      <Badge className={accepted ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-red-100 text-red-600 hover:bg-red-100'}>
+        {accepted ? '✓ Aceptado' : '✗ No aceptado'}
+      </Badge>
     </div>
   );
 }

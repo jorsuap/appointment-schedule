@@ -15,7 +15,7 @@ export async function GET() {
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
   try {
-    const [todayAppointments, upcomingAppointments, monthlyAppointments, tariffs] =
+    const [todayAppointments, upcomingAppointments, monthlyAppointments, monthlyPackageAppointments, tariffs] =
       await Promise.all([
         // Today's appointments: CONFIRMED or COMPLETED
         prisma.appointment.findMany({
@@ -46,14 +46,29 @@ export async function GET() {
           take: 5,
         }),
 
-        // Monthly appointments for income: CONFIRMED or COMPLETED within current month
+        // Monthly individual appointments for income (no package)
         prisma.appointment.findMany({
           where: {
             professionalId,
             date: { gte: startOfMonth, lte: endOfMonth },
             status: { in: ['CONFIRMED', 'COMPLETED'] },
+            sessionPackageId: null,
           },
           select: { serviceId: true },
+        }),
+
+        // Monthly package appointments for income (by package confirmation date)
+        prisma.appointment.findMany({
+          where: {
+            professionalId,
+            status: { in: ['CONFIRMED', 'COMPLETED'] },
+            sessionPackageId: { not: null },
+            sessionPackage: {
+              status: 'CONFIRMED',
+              updatedAt: { gte: startOfMonth, lte: endOfMonth },
+            },
+          },
+          select: { serviceId: true, sessionPackage: { select: { discountPerSession: true } } },
         }),
 
         // Professional's tariffs for income calculation
@@ -71,11 +86,23 @@ export async function GET() {
     let totalBilled = 0;
     let commission = 0;
 
+    // Individual sessions (full price)
     for (const appointment of monthlyAppointments) {
       const tariff = tariffMap.get(appointment.serviceId);
       if (tariff) {
         totalBilled += tariff.price;
         commission += Math.round((tariff.price * tariff.commission) / 100);
+      }
+    }
+
+    // Package sessions (price - discount)
+    for (const appointment of monthlyPackageAppointments) {
+      const tariff = tariffMap.get(appointment.serviceId);
+      if (tariff) {
+        const discount = appointment.sessionPackage?.discountPerSession ?? 0;
+        const amount = tariff.price - discount;
+        totalBilled += amount;
+        commission += Math.round((amount * tariff.commission) / 100);
       }
     }
 

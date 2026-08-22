@@ -144,6 +144,33 @@ export default async function PacienteDetailPage({ params }: { params: Promise<{
             </CardContent>
           </Card>
 
+          {/* Consentimientos */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-grape">Consentimientos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
+                <span>Política de tratamiento de datos</span>
+                <Badge className={patient.dataPrivacyConsent ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-red-100 text-red-600 hover:bg-red-100'}>
+                  {patient.dataPrivacyConsent ? '✓ Aceptado' : '✗ No aceptado'}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
+                <span>Consentimiento informado</span>
+                <Badge className={patient.informedConsent ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-red-100 text-red-600 hover:bg-red-100'}>
+                  {patient.informedConsent ? '✓ Aceptado' : '✗ No aceptado'}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2 text-sm">
+                <span>Comunicaciones transaccionales</span>
+                <Badge className={patient.commsConsent ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-red-100 text-red-600 hover:bg-red-100'}>
+                  {patient.commsConsent ? '✓ Aceptado' : '✗ No aceptado'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Progress Notes */}
           <Card className="border-border/40">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
