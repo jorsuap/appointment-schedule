@@ -271,7 +271,7 @@ export default function DatosPage() {
                       <p className="text-sm leading-relaxed text-foreground">
                         Acepto la{' '}
                         <a
-                          href="/privacidad"
+                          href="/politica-datos"
                           className="font-medium text-grape underline"
                           target="_blank"
                         >

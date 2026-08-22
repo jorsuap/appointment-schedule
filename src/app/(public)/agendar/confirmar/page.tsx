@@ -209,11 +209,7 @@ export default function ConfirmarPage() {
                       <a href="/consentimiento-informado" target="_blank" className="font-medium text-grape underline">
                         Consentimiento Informado de conAlma
                       </a>
-                      , incluyendo el tratamiento de mis datos personales conforme a la{' '}
-                      <a href="/politica-datos" target="_blank" className="font-medium text-grape underline">
-                        política de tratamiento de datos
-                      </a>
-                      , así como la política de cancelación: las sesiones deben cancelarse con al menos 8 horas de anticipación para recibir reembolso.
+                      , incluyendo la política de cancelación: las sesiones deben cancelarse con al menos 8 horas de anticipación para recibir reembolso.
                     </p>
                     <FormMessage />
                   </div>
