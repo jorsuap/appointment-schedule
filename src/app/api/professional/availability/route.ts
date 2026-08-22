@@ -16,7 +16,7 @@ export async function GET() {
         orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
       }),
       prisma.blockedDate.findMany({
-        where: { professionalId, date: { not: null } },
+        where: { professionalId },
         orderBy: { date: 'asc' },
       }),
     ]);
