@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Package, Filter } from 'lucide-react';
+import { CheckCircle, Loader2, Package, Filter } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,6 +95,7 @@ export function AdminPackageList() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [professionalFilter, setProfessionalFilter] = useState('all');
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const fetchProfessionals = useCallback(async () => {
     try {
@@ -136,6 +137,25 @@ export function AdminPackageList() {
   useEffect(() => {
     fetchPackages();
   }, [fetchPackages]);
+
+  const handleConfirmTransfer = async (packageId: string) => {
+    setConfirmingId(packageId);
+    try {
+      const res = await fetch(`/api/admin/packages/${packageId}/confirm`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || data.error || 'Error al confirmar');
+      }
+      toast.success('Transferencia confirmada — citas creadas exitosamente');
+      fetchPackages();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al confirmar transferencia');
+    } finally {
+      setConfirmingId(null);
+    }
+  };
 
   return (
     <Card>
@@ -255,6 +275,23 @@ export function AdminPackageList() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Confirm transfer button — only for BANK_TRANSFER + PENDING_PAYMENT */}
+                    {pkg.status === 'PENDING_PAYMENT' && pkg.paymentMethod === 'BANK_TRANSFER' && (
+                      <Button
+                        size="sm"
+                        className="mt-2 w-full gap-2 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleConfirmTransfer(pkg.id)}
+                        disabled={confirmingId === pkg.id}
+                      >
+                        {confirmingId === pkg.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-3.5 w-3.5" />
+                        )}
+                        Confirmar transferencia
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -273,6 +310,7 @@ export function AdminPackageList() {
                       <TableHead>Estado</TableHead>
                       <TableHead>Método de pago</TableHead>
                       <TableHead>Fecha creación</TableHead>
+                      <TableHead>Acción</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -293,6 +331,23 @@ export function AdminPackageList() {
                           {PAYMENT_METHOD_LABELS[pkg.paymentMethod]}
                         </TableCell>
                         <TableCell>{formatDate(pkg.createdAt)}</TableCell>
+                        <TableCell>
+                          {pkg.status === 'PENDING_PAYMENT' && pkg.paymentMethod === 'BANK_TRANSFER' && (
+                            <Button
+                              size="sm"
+                              className="gap-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleConfirmTransfer(pkg.id)}
+                              disabled={confirmingId === pkg.id}
+                            >
+                              {confirmingId === pkg.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                              Confirmar
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

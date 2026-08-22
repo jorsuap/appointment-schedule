@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { confirmPackage } from '@/lib/packages/package-confirmer';
 import type { Session } from 'next-auth';
 
 /**
  * POST /api/admin/packages/[id]/confirm
  * Confirms a bank transfer payment for a SessionPackage.
- * Verifies that the package exists and is in PENDING_PAYMENT status.
- * Updates status to CONFIRMED.
+ * Delegates to confirmPackage() which creates appointments + calendar events.
+ * Only for packages with BANK_TRANSFER method and PENDING_PAYMENT status.
  * Requires admin session.
- *
- * NOTE: When package-confirmer.ts is implemented (task 5.1),
- * this route will delegate to confirmPackage(id) which also creates appointments.
  */
 export async function POST(
   _request: Request,
@@ -35,17 +33,15 @@ export async function POST(
 
     if (pkg.status !== 'PENDING_PAYMENT') {
       return NextResponse.json(
-        { error: 'INVALID_STATUS', message: 'Package must be in PENDING_PAYMENT status to confirm' },
+        { error: 'INVALID_STATUS', message: 'El paquete debe estar en estado pendiente de pago' },
         { status: 409 },
       );
     }
 
-    const updated = await prisma.sessionPackage.update({
-      where: { id },
-      data: { status: 'CONFIRMED' },
-    });
+    // Use confirmPackage to create appointments, calendar events, and send emails
+    await confirmPackage(id);
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true, status: 'CONFIRMED' });
   } catch (err) {
     console.error('[admin/packages/[id]/confirm] POST error:', err);
     return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });

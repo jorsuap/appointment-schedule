@@ -13,6 +13,8 @@ import { StepSessionsConfig } from './step-sessions-config';
 import { StepSchedule } from './step-schedule';
 import { StepPaymentMethod } from './step-payment-method';
 import { StepSummary } from './step-summary';
+import { PaymentLinkDisplay } from './payment-link-display';
+import { BankTransferDisplay } from './bank-transfer-display';
 
 export interface WizardData {
   patientId: string;
@@ -53,6 +55,10 @@ export function PackageWizard() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [completedData, setCompletedData] = useState<{
+    paymentLinkUrl?: string;
+    method: 'wompi' | 'bank_transfer';
+  } | null>(null);
   const [patientName, setPatientName] = useState('');
   const [pricePerSession, setPricePerSession] = useState(0);
   const [discountPerSession, setDiscountPerSession] = useState(0);
@@ -154,14 +160,50 @@ export function PackageWizard() {
         return;
       }
 
+      const data = await res.json();
       toast.success('Paquete creado exitosamente');
-      router.push('/profesional/paquetes');
+
+      // Show post-creation screen based on payment method
+      if (wizardData.paymentMethod === 'wompi' && data.paymentLink?.linkUrl) {
+        setCompletedData({ method: 'wompi', paymentLinkUrl: data.paymentLink.linkUrl });
+      } else if (wizardData.paymentMethod === 'bank_transfer') {
+        setCompletedData({ method: 'bank_transfer' });
+      } else {
+        router.push('/profesional/paquetes');
+      }
     } catch {
       toast.error('Error de conexión. Intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Show post-creation screen
+  if (completedData) {
+    return (
+      <div className="mx-auto w-full max-w-2xl space-y-4">
+        {completedData.method === 'wompi' && completedData.paymentLinkUrl && (
+          <PaymentLinkDisplay
+            linkUrl={completedData.paymentLinkUrl}
+            patientName={patientName}
+          />
+        )}
+        {completedData.method === 'bank_transfer' && (
+          <BankTransferDisplay
+            patientName={patientName}
+            totalPrice={totalPrice}
+          />
+        )}
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => router.push('/profesional/paquetes')}
+        >
+          Ir a mis paquetes
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Card className="mx-auto w-full max-w-2xl">
