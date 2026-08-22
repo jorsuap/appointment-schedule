@@ -31,9 +31,9 @@ export async function GET() {
       })),
       blockedDates: blockedDates.map((bd) => ({
         id: bd.id,
-        date: bd.date.toISOString(),
+        date: bd.date ? bd.date.toISOString() : null,
         reason: bd.reason,
-      })),
+      })).filter((bd) => bd.date !== null),
     });
   } catch (err) {
     console.error('Availability GET error:', err);
