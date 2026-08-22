@@ -16,10 +16,26 @@ export async function GET() {
         orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
       }),
       prisma.blockedDate.findMany({
-        where: { professionalId },
+        where: { professionalId, date: { not: null } },
         orderBy: { date: 'asc' },
       }),
     ]);
+
+    // Safely serialize blocked dates — skip any with invalid date
+    const serializedBlockedDates = [];
+    for (const bd of blockedDates) {
+      try {
+        if (bd.date && !isNaN(bd.date.getTime())) {
+          serializedBlockedDates.push({
+            id: bd.id,
+            date: bd.date.toISOString(),
+            reason: bd.reason,
+          });
+        }
+      } catch {
+        // Skip invalid dates
+      }
+    }
 
     return NextResponse.json({
       blocks: blocks.map((block) => ({
@@ -29,11 +45,7 @@ export async function GET() {
         endTime: block.endTime,
         isActive: block.isActive,
       })),
-      blockedDates: blockedDates.map((bd) => ({
-        id: bd.id,
-        date: bd.date ? bd.date.toISOString() : null,
-        reason: bd.reason,
-      })).filter((bd) => bd.date !== null),
+      blockedDates: serializedBlockedDates,
     });
   } catch (err) {
     console.error('Availability GET error:', err);
