@@ -97,16 +97,19 @@ export async function POST(request: NextRequest) {
     // Extract per-session time overrides (not validated by Zod, optional)
     const sessionTimeOverrides: Record<string, string> = body.sessionTimeOverrides || {};
 
-    // 2. Verify patient eligibility
-    const eligibleAppointment = await prisma.appointment.findFirst({
+    // 2. Verify patient eligibility (has appointment OR was created by this professional)
+    const eligiblePatient = await prisma.patient.findFirst({
       where: {
-        patientId,
-        professionalId,
-        status: { in: ['CONFIRMED', 'COMPLETED'] },
+        id: patientId,
+        OR: [
+          { appointments: { some: { professionalId, status: { in: ['CONFIRMED', 'COMPLETED'] } } } },
+          { createdByProfessionalId: professionalId },
+        ],
       },
+      select: { id: true },
     });
 
-    if (!eligibleAppointment) {
+    if (!eligiblePatient) {
       return NextResponse.json(
         { error: 'PATIENT_NOT_ELIGIBLE' },
         { status: 403 }
