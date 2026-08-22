@@ -52,69 +52,110 @@ export function BankTransferDisplay({
   }
 
   function handleDownload() {
-    // Create a canvas-based image with bank details
+    // High-res canvas (2x for retina)
+    const scale = 2;
+    const W = 900;
+    const H = 600;
     const canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = H * scale;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.scale(scale, scale);
 
-    canvas.width = 800;
-    canvas.height = 500;
+    // White background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
 
-    // Background
-    ctx.fillStyle = '#FAF5FA';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Header
+    // Top accent bar
     ctx.fillStyle = '#3C1955';
-    ctx.font = 'bold 28px Montserrat, sans-serif';
+    ctx.fillRect(0, 0, W, 6);
+
+    // Title
+    ctx.fillStyle = '#3C1955';
+    ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Datos para transferencia', canvas.width / 2, 50);
+    ctx.fillText('Datos para transferencia', W / 2, 50);
 
-    // Amount
+    // Subtitle - amount
     ctx.fillStyle = '#3C1955';
-    ctx.font = 'bold 24px Montserrat, sans-serif';
-    ctx.fillText(`Total a pagar: ${formatCOP(totalPrice)}`, canvas.width / 2, 90);
+    ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+    ctx.fillText(formatCOP(totalPrice), W / 2, 90);
 
     // Divider
-    ctx.strokeStyle = '#D2AAF0';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#E8D5F5';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(60, 110);
-    ctx.lineTo(canvas.width - 60, 110);
+    ctx.lineTo(W - 60, 110);
     ctx.stroke();
 
-    // Holder info
+    // Holder section
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#3C1955';
-    ctx.font = 'bold 18px Montserrat, sans-serif';
-    ctx.fillText('Titular:', 60, 150);
-    ctx.font = '18px Montserrat, sans-serif';
-    ctx.fillText(BANK_DETAILS.holder, 180, 150);
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '14px system-ui, -apple-system, sans-serif';
+    ctx.fillText('TITULAR', 60, 145);
 
-    ctx.font = 'bold 18px Montserrat, sans-serif';
-    ctx.fillText('CC:', 60, 185);
-    ctx.font = '18px Montserrat, sans-serif';
-    ctx.fillText(BANK_DETAILS.cc, 180, 185);
+    ctx.fillStyle = '#1F2937';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText(BANK_DETAILS.holder, 60, 170);
 
-    // Nequi
-    ctx.font = 'bold 20px Montserrat, sans-serif';
-    ctx.fillStyle = '#3C1955';
-    ctx.fillText('📱 Nequi', 60, 240);
-    ctx.font = '18px Montserrat, sans-serif';
-    ctx.fillText(BANK_DETAILS.nequi, 60, 270);
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '14px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`CC: ${BANK_DETAILS.cc}`, 60, 195);
 
-    // Bancolombia
-    ctx.font = 'bold 20px Montserrat, sans-serif';
-    ctx.fillText('🏦 Bancolombia', 60, 330);
-    ctx.font = '18px Montserrat, sans-serif';
-    ctx.fillText(`Cuenta ${BANK_DETAILS.bancolombia.type}: ${BANK_DETAILS.bancolombia.account}`, 60, 360);
+    // Nequi section - rounded box
+    const nequiY = 225;
+    ctx.fillStyle = '#F8F8F8';
+    ctx.beginPath();
+    ctx.roundRect(60, nequiY, W - 120, 90, 12);
+    ctx.fill();
+
+    ctx.fillStyle = '#E91E63';
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Nequi', 90, nequiY + 35);
+
+    ctx.fillStyle = '#1F2937';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.fillText(BANK_DETAILS.nequi, 90, nequiY + 65);
+
+    // Bancolombia section - rounded box
+    const bancoY = 335;
+    ctx.fillStyle = '#F8F8F8';
+    ctx.beginPath();
+    ctx.roundRect(60, bancoY, W - 120, 90, 12);
+    ctx.fill();
+
+    ctx.fillStyle = '#FDDA24';
+    ctx.beginPath();
+    ctx.roundRect(60, bancoY, 5, 90, [12, 0, 0, 12]);
+    ctx.fill();
+
+    ctx.fillStyle = '#004B8D';
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Bancolombia', 90, bancoY + 35);
+
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '14px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Cuenta ${BANK_DETAILS.bancolombia.type}`, 90, bancoY + 55);
+
+    ctx.fillStyle = '#1F2937';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.fillText(BANK_DETAILS.bancolombia.account, 90, bancoY + 80);
 
     // Footer
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#666';
-    ctx.font = '14px Montserrat, sans-serif';
-    ctx.fillText(`Paciente: ${patientName}`, canvas.width / 2, 430);
-    ctx.fillText('conAlma — Psicología online', canvas.width / 2, 460);
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '13px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`Paciente: ${patientName}`, W / 2, H - 50);
+
+    ctx.fillStyle = '#3C1955';
+    ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+    ctx.fillText('conAlma — Psicología online', W / 2, H - 25);
+
+    // Bottom accent bar
+    ctx.fillStyle = '#D2AAF0';
+    ctx.fillRect(0, H - 6, W, 6);
 
     // Download
     const link = document.createElement('a');
