@@ -11,14 +11,20 @@ export default async function AdminDashboardPage() {
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
-  const [todayAppointments, totalPatients, totalRevenue, upcomingAppointments] = await Promise.all([
+  const [todayAppointments, totalPatients, individualRevenue, packageRevenue, upcomingAppointments] = await Promise.all([
     prisma.appointment.count({
       where: { date: { gte: startOfDay, lt: endOfDay }, status: 'CONFIRMED' },
     }),
     prisma.patient.count(),
+    // Individual appointment payments
     prisma.payment.aggregate({
       where: { status: 'APPROVED' },
       _sum: { amount: true },
+    }),
+    // Package payments (confirmed packages)
+    prisma.sessionPackage.aggregate({
+      where: { status: 'CONFIRMED' },
+      _sum: { totalPrice: true },
     }),
     prisma.appointment.findMany({
       where: { date: { gte: now }, status: 'CONFIRMED' },
@@ -28,11 +34,13 @@ export default async function AdminDashboardPage() {
     }),
   ]);
 
+  const totalRevenueAmount = (individualRevenue._sum.amount || 0) + (packageRevenue._sum.totalPrice || 0);
+
   const stats = [
     { label: 'Citas hoy', value: String(todayAppointments), icon: CalendarDays, color: 'text-grape' },
     { label: 'Pacientes totales', value: String(totalPatients), icon: Users, color: 'text-plum' },
     { label: 'Próximas citas', value: String(upcomingAppointments.length), icon: Clock, color: 'text-grape' },
-    { label: 'Ingresos totales', value: `$${(totalRevenue._sum.amount || 0).toLocaleString('es-CO')}`, icon: DollarSign, color: 'text-green-600' },
+    { label: 'Ingresos totales', value: `$${totalRevenueAmount.toLocaleString('es-CO')}`, icon: DollarSign, color: 'text-green-600' },
   ];
 
   return (
