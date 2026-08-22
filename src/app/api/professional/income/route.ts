@@ -42,12 +42,16 @@ export async function GET(request: NextRequest) {
       ? new Date(new Date(endDateParam).setHours(23, 59, 59, 999))
       : endDate;
 
-    // Fetch appointments with status CONFIRMED or COMPLETED within the date range
-    const [appointments, tariffs] = await Promise.all([
+    // Fetch appointments within the date range:
+    // - Individual appointments (no package): filter by appointment.date
+    // - Package appointments: filter by package payment date (sessionPackage.updatedAt when confirmed)
+    const [individualAppointments, packageAppointments, tariffs] = await Promise.all([
+      // Individual sessions (no package) within date range
       prisma.appointment.findMany({
         where: {
           professionalId,
           status: { in: ['CONFIRMED', 'COMPLETED'] },
+          sessionPackageId: null,
           date: { gte: startDate, lte: adjustedEndDate },
         },
         include: {
@@ -56,10 +60,30 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { date: 'desc' },
       }),
+      // Package sessions: all appointments from packages confirmed within date range
+      prisma.appointment.findMany({
+        where: {
+          professionalId,
+          status: { in: ['CONFIRMED', 'COMPLETED'] },
+          sessionPackageId: { not: null },
+          sessionPackage: {
+            status: 'CONFIRMED',
+            updatedAt: { gte: startDate, lte: adjustedEndDate },
+          },
+        },
+        include: {
+          patient: { select: { fullName: true } },
+          service: { select: { name: true } },
+          sessionPackage: { select: { updatedAt: true } },
+        },
+        orderBy: { date: 'asc' },
+      }),
       prisma.professionalTariff.findMany({
         where: { professionalId },
       }),
     ]);
+
+    const appointments = [...individualAppointments, ...packageAppointments];
 
     // Build tariff lookup by serviceId
     const tariffMap = new Map<string, { price: number; commission: number }>(
@@ -72,10 +96,16 @@ export async function GET(request: NextRequest) {
 
     const sessions = appointments.map((appt) => {
       const tariff = tariffMap.get(appt.serviceId);
+      const sessionPkg = 'sessionPackage' in appt ? appt.sessionPackage : null;
       const amount = tariff?.price ?? 0;
       const commissionRate = tariff?.commission ?? 0;
       const commissionAmount = Math.round((amount * commissionRate) / 100);
       const netAmount = amount - commissionAmount;
+
+      // For package sessions, use discount price
+      const finalAmount = sessionPkg
+        ? amount - (appt as unknown as { sessionPackage: { discountPerSession?: number } }).sessionPackage?.discountPerSession ?? 0
+        : amount;
 
       totalBilled += amount;
       totalCommission += commissionAmount;
@@ -90,6 +120,7 @@ export async function GET(request: NextRequest) {
         commissionAmount,
         netAmount,
         status: appt.status as 'CONFIRMED' | 'COMPLETED',
+        isPackage: !!appt.sessionPackageId,
       };
     });
 

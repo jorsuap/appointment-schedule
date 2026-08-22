@@ -22,20 +22,32 @@ export async function GET(request: NextRequest) {
       ? new Date(new Date(endDateParam).setHours(23, 59, 59, 999))
       : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    // Build where clause
-    const where: Record<string, unknown> = {
+    // Build where clause for individual appointments (no package)
+    const individualWhere: Record<string, unknown> = {
       status: { in: ['CONFIRMED', 'COMPLETED'] },
+      sessionPackageId: null,
       date: { gte: startDate, lte: endDate },
     };
 
+    // Build where clause for package appointments (filter by payment date)
+    const packageWhere: Record<string, unknown> = {
+      status: { in: ['CONFIRMED', 'COMPLETED'] },
+      sessionPackageId: { not: null },
+      sessionPackage: {
+        status: 'CONFIRMED',
+        updatedAt: { gte: startDate, lte: endDate },
+      },
+    };
+
     if (professionalId) {
-      where.professionalId = professionalId;
+      individualWhere.professionalId = professionalId;
+      packageWhere.professionalId = professionalId;
     }
 
-    // Fetch appointments with tariff data
-    const [appointments, tariffs] = await Promise.all([
+    // Fetch both types + tariffs
+    const [individualAppointments, packageAppointments, tariffs] = await Promise.all([
       prisma.appointment.findMany({
-        where,
+        where: individualWhere,
         include: {
           patient: { select: { fullName: true } },
           professional: { select: { id: true, name: true } },
@@ -43,8 +55,19 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { date: 'desc' },
       }),
+      prisma.appointment.findMany({
+        where: packageWhere,
+        include: {
+          patient: { select: { fullName: true } },
+          professional: { select: { id: true, name: true } },
+          service: { select: { name: true } },
+        },
+        orderBy: { date: 'asc' },
+      }),
       prisma.professionalTariff.findMany(),
     ]);
+
+    const appointments = [...individualAppointments, ...packageAppointments];
 
     // Build tariff lookup: professionalId-serviceId → { price, commission }
     const tariffMap = new Map<string, { price: number; commission: number }>();
