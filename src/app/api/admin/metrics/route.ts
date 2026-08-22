@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
           patient: { select: { fullName: true } },
           professional: { select: { id: true, name: true } },
           service: { select: { name: true } },
+          sessionPackage: { select: { discountPerSession: true } },
         },
         orderBy: { date: 'asc' },
       }),
@@ -84,8 +85,15 @@ export async function GET(request: NextRequest) {
 
     const sessions = appointments.map((appt) => {
       const tariff = tariffMap.get(`${appt.professional.id}-${appt.serviceId}`);
-      const amount = tariff?.price ?? 0;
+      const basePrice = tariff?.price ?? 0;
       const commissionRate = tariff?.commission ?? 0;
+
+      // For package sessions, apply the per-session discount
+      const discount = 'sessionPackage' in appt && appt.sessionPackage
+        ? (appt.sessionPackage as { discountPerSession: number }).discountPerSession ?? 0
+        : 0;
+      const amount = basePrice - discount;
+
       const commission = Math.round((amount * commissionRate) / 100);
       const payout = amount - commission;
 
