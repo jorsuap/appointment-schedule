@@ -519,7 +519,10 @@ function AvailabilitySkeleton() {
 // --- Utils ---
 
 function formatBlockedDate(isoDate: string): string {
-  const date = new Date(isoDate);
+  // Parse YYYY-MM-DD from ISO string to avoid timezone offset
+  const [datePart] = isoDate.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
   return date.toLocaleDateString('es-CO', {
     weekday: 'long',
     day: 'numeric',
