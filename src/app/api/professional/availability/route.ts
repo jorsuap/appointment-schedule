@@ -37,7 +37,8 @@ export async function GET() {
     });
   } catch (err) {
     console.error('Availability GET error:', err);
-    return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'INTERNAL_ERROR', message }, { status: 500 });
   }
 }
 
