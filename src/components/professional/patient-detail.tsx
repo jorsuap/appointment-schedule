@@ -6,6 +6,7 @@ import { User, Heart, Shield, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PatientData {
   id: string;
@@ -147,164 +148,157 @@ export function PatientDetail({ patientId }: PatientDetailProps) {
         )}
       </div>
 
-      {/* Personal Info */}
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base text-grape">
-            <User className="h-4 w-4 text-plum" />
-            Datos personales
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-          <InfoField label="Nombre completo" value={patient.fullName} />
-          <InfoField label="Nombre preferido" value={patient.preferredName} />
-          <InfoField label="Email" value={patient.email} />
-          <InfoField
-            label="Fecha de nacimiento"
-            value={formatDate(patient.dateOfBirth)}
-          />
-          <InfoField label="País" value={patient.country} />
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="ficha">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="ficha">Ficha</TabsTrigger>
+          <TabsTrigger value="citas">Citas ({appointments.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Emotional Assessment */}
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base text-grape">
-            <Heart className="h-4 w-4 text-plum" />
-            Evaluación emocional
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div>
-            <p className="text-muted-foreground">¿Qué te trae por aquí?</p>
-            <p className="mt-0.5 font-medium">
-              {patient.reasonForVisit || '—'}
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">¿Cómo te has sentido?</p>
-            <p className="mt-0.5 font-medium">
-              {patient.recentFeelings || '—'}
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">Riesgo de autolesión:</p>
-            <Badge
-              variant={patient.selfHarmRisk ? 'destructive' : 'secondary'}
-              className="mt-0.5"
-            >
-              {patient.selfHarmRisk ? 'Sí — requiere atención' : 'No'}
-            </Badge>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">Tratamiento actual:</p>
-            <p className="mt-0.5 font-medium">
-              {patient.currentTreatment ? 'Sí' : 'No'}
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">Diagnóstico previo:</p>
-            <p className="mt-0.5 font-medium">
-              {patient.previousDiagnosis || '—'}
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">
-              ¿Qué busca en el acompañamiento?
-            </p>
-            <p className="mt-0.5 font-medium">
-              {patient.desiredOutcome || '—'}
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-muted-foreground">Notas adicionales:</p>
-            <p className="mt-0.5 font-medium">
-              {patient.additionalNotes || '—'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Tab: Ficha */}
+        <TabsContent value="ficha" className="mt-4 space-y-4">
+          {/* Personal Info */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-grape">
+                <User className="h-4 w-4 text-plum" />
+                Datos personales
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+              <InfoField label="Nombre completo" value={patient.fullName} />
+              <InfoField label="Nombre preferido" value={patient.preferredName} />
+              <InfoField label="Email" value={patient.email} />
+              <InfoField label="Fecha de nacimiento" value={formatDate(patient.dateOfBirth)} />
+              <InfoField label="País" value={patient.country} />
+            </CardContent>
+          </Card>
 
-      {/* Emergency Contact */}
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base text-grape">
-            <Shield className="h-4 w-4 text-plum" />
-            Contacto de emergencia
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-          <InfoField label="Nombre" value={patient.emergencyName} />
-          <InfoField label="Relación" value={patient.emergencyRelation} />
-          <InfoField label="Teléfono" value={patient.emergencyPhone} />
-          <InfoField label="País" value={patient.emergencyCountry} />
-        </CardContent>
-      </Card>
+          {/* Emotional Assessment */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-grape">
+                <Heart className="h-4 w-4 text-plum" />
+                Evaluación emocional
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div>
+                <p className="text-muted-foreground">¿Qué te trae por aquí?</p>
+                <p className="mt-0.5 font-medium">{patient.reasonForVisit || '—'}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">¿Cómo te has sentido?</p>
+                <p className="mt-0.5 font-medium">{patient.recentFeelings || '—'}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">Riesgo de autolesión:</p>
+                <Badge variant={patient.selfHarmRisk ? 'destructive' : 'secondary'} className="mt-0.5">
+                  {patient.selfHarmRisk ? 'Sí — requiere atención' : 'No'}
+                </Badge>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">Tratamiento actual:</p>
+                <p className="mt-0.5 font-medium">{patient.currentTreatment ? 'Sí' : 'No'}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">Diagnóstico previo:</p>
+                <p className="mt-0.5 font-medium">{patient.previousDiagnosis || '—'}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">¿Qué busca en el acompañamiento?</p>
+                <p className="mt-0.5 font-medium">{patient.desiredOutcome || '—'}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-muted-foreground">Notas adicionales:</p>
+                <p className="mt-0.5 font-medium">{patient.additionalNotes || '—'}</p>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Consentimientos */}
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base text-grape">
-            <Shield className="h-4 w-4 text-plum" />
-            Consentimientos
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ConsentRow label="Política de tratamiento de datos" accepted={patient.dataPrivacyConsent} />
-          <ConsentRow label="Consentimiento informado" accepted={patient.informedConsent} />
-          <ConsentRow label="Comunicaciones transaccionales" accepted={patient.commsConsent} />
-        </CardContent>
-      </Card>
+          {/* Emergency Contact */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-grape">
+                <Shield className="h-4 w-4 text-plum" />
+                Contacto de emergencia
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+              <InfoField label="Nombre" value={patient.emergencyName} />
+              <InfoField label="Relación" value={patient.emergencyRelation} />
+              <InfoField label="Teléfono" value={patient.emergencyPhone} />
+              <InfoField label="País" value={patient.emergencyCountry} />
+            </CardContent>
+          </Card>
 
-      {/* Appointment History */}
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base text-grape">
-              <Calendar className="h-4 w-4 text-plum" />
-              Historial de citas
-            </CardTitle>
-            <Badge className="bg-plum/20 text-grape hover:bg-plum/30">
-              {appointments.length}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {appointments.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No hay citas registradas con este paciente
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {appointments.map((appt) => (
-                <div
-                  key={appt.id}
-                  className="flex flex-col gap-2 rounded-lg bg-secondary/50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-grape">
-                      {formatDate(appt.date)} — {appt.startTime} hrs
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {appt.serviceName}
-                    </p>
-                  </div>
-                  <Badge variant={statusVariants[appt.status] || 'outline'}>
-                    {statusLabels[appt.status] || appt.status}
-                  </Badge>
+          {/* Consentimientos */}
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-grape">
+                <Shield className="h-4 w-4 text-plum" />
+                Consentimientos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ConsentRow label="Política de tratamiento de datos" accepted={patient.dataPrivacyConsent} />
+              <ConsentRow label="Consentimiento informado" accepted={patient.informedConsent} />
+              <ConsentRow label="Comunicaciones transaccionales" accepted={patient.commsConsent} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: Citas */}
+        <TabsContent value="citas" className="mt-4">
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base text-grape">
+                  <Calendar className="h-4 w-4 text-plum" />
+                  Historial de citas
+                </CardTitle>
+                <Badge className="bg-plum/20 text-grape hover:bg-plum/30">
+                  {appointments.length}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {appointments.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  No hay citas registradas con este paciente
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {appointments.map((appt) => (
+                    <div
+                      key={appt.id}
+                      className="flex flex-col gap-2 rounded-lg bg-secondary/50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-grape">
+                          {formatDate(appt.date)} — {appt.startTime} hrs
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {appt.serviceName}
+                        </p>
+                      </div>
+                      <Badge variant={statusVariants[appt.status] || 'outline'}>
+                        {statusLabels[appt.status] || appt.status}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
