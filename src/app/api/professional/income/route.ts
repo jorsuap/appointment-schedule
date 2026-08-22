@@ -96,16 +96,10 @@ export async function GET(request: NextRequest) {
 
     const sessions = appointments.map((appt) => {
       const tariff = tariffMap.get(appt.serviceId);
-      const sessionPkg = 'sessionPackage' in appt ? appt.sessionPackage : null;
       const amount = tariff?.price ?? 0;
       const commissionRate = tariff?.commission ?? 0;
       const commissionAmount = Math.round((amount * commissionRate) / 100);
       const netAmount = amount - commissionAmount;
-
-      // For package sessions, use discount price
-      const finalAmount = sessionPkg
-        ? amount - (appt as unknown as { sessionPackage: { discountPerSession?: number } }).sessionPackage?.discountPerSession ?? 0
-        : amount;
 
       totalBilled += amount;
       totalCommission += commissionAmount;
