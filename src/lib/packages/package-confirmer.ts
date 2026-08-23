@@ -16,6 +16,7 @@ import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/encryption';
 import { refreshAccessToken, createCalendarEvent } from '@/lib/google-oauth';
 import { sendPackageConfirmation } from '@/lib/emails/send-package-confirmation';
+import { sendPackageProfessionalNotification } from '@/lib/emails/send-package-professional-notification';
 import {
   calculateSessionDates,
   type Frequency,
@@ -186,6 +187,29 @@ export async function confirmPackage(packageId: string): Promise<void> {
       meetLink: appt.meetLink,
     })),
   }).catch((err) => {
-    console.error(`[PackageConfirmer] Email notification failed for package ${packageId}:`, err);
+    console.error(`[PackageConfirmer] Patient email notification failed for package ${packageId}:`, err);
+  });
+
+  // 6. Notify the professional about the confirmed package (fire-and-forget)
+  const dateFormatter = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  sendPackageProfessionalNotification({
+    to: professional.email,
+    professionalName: professional.name,
+    patientName: sessionPackage.patient.preferredName || sessionPackage.patient.fullName,
+    sessionCount: sessionPackage.sessionCount,
+    frequency: frequencyLabels[sessionPackage.frequency.toLowerCase()] || sessionPackage.frequency,
+    totalPrice: sessionPackage.totalPrice,
+    sessions: updatedAppointments.map((appt) => ({
+      date: dateFormatter.format(appt.date),
+      startTime: appt.startTime,
+    })),
+  }).catch((err) => {
+    console.error(`[PackageConfirmer] Professional email notification failed for package ${packageId}:`, err);
   });
 }
