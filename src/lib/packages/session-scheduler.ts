@@ -13,11 +13,11 @@ export interface ScheduledSession {
   endTime: string;
 }
 
-/** Days to add per frequency */
+/** Days to add per frequency (using exact week multiples to preserve day of week) */
 const FREQUENCY_DAYS: Record<Frequency, number> = {
   weekly: 7,
-  biweekly: 15,
-  monthly: 30,
+  biweekly: 14,
+  monthly: 28,
 };
 
 /**

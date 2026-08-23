@@ -31,14 +31,14 @@ interface StepScheduleProps {
 
 const FREQUENCY_OPTIONS: { value: Frequency; label: string; days: number }[] = [
   { value: 'weekly', label: 'Semanal (cada 7 días)', days: 7 },
-  { value: 'biweekly', label: 'Quincenal (cada 15 días)', days: 15 },
-  { value: 'monthly', label: 'Mensual (cada 30 días)', days: 30 },
+  { value: 'biweekly', label: 'Quincenal (cada 2 semanas)', days: 14 },
+  { value: 'monthly', label: 'Mensual (cada 4 semanas)', days: 28 },
 ];
 
 const FREQUENCY_DAYS: Record<Frequency, number> = {
   weekly: 7,
-  biweekly: 15,
-  monthly: 30,
+  biweekly: 14,
+  monthly: 28,
 };
 
 function calculatePreviewDates(
