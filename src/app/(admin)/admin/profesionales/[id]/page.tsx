@@ -7,12 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { prisma } from '@/lib/prisma';
 import { DeleteProfessionalButton } from './delete-professional-button';
+import { TariffsTab } from './tariffs-tab';
 
 export const dynamic = 'force-dynamic';
 
 const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-export default async function ProfesionalDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProfesionalDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   const professional = await prisma.professional.findUnique({
@@ -32,9 +37,25 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
 
   if (!professional) notFound();
 
-  const initials = professional.name.split(' ').map((n) => n[0]).join('').slice(0, 2);
+  const initials = professional.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2);
 
-  const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  const tariffsWithServiceName = professional.tariffs.map((tariff) => ({
+    id: tariff.id,
+    serviceName:
+      professional.services.find((s) => s.serviceId === tariff.serviceId)?.service.name ||
+      'Servicio',
+    price: tariff.price,
+    commission: tariff.commission,
+  }));
+
+  const statusLabels: Record<
+    string,
+    { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  > = {
     CONFIRMED: { label: 'Confirmada', variant: 'default' },
     COMPLETED: { label: 'Completada', variant: 'secondary' },
     CANCELLED: { label: 'Cancelada', variant: 'destructive' },
@@ -53,16 +74,21 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <Avatar className="h-16 w-16">
             <AvatarImage src={professional.photoUrl || undefined} alt={professional.name} />
-            <AvatarFallback className="bg-plum/20 text-lg font-semibold text-grape">
+            <AvatarFallback className="bg-plum/20 text-grape text-lg font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold text-grape">{professional.name}</h1>
-            <p className="text-sm text-muted-foreground">{professional.specialty} • {professional.email}</p>
+            <h1 className="text-grape text-2xl font-bold">{professional.name}</h1>
+            <p className="text-muted-foreground text-sm">
+              {professional.specialty} • {professional.email}
+            </p>
             <div className="mt-2 flex flex-wrap gap-1">
               {professional.traits.map((t) => (
-                <span key={t} className="rounded-full bg-jasmine/30 px-2 py-0.5 text-xs font-medium text-grape">
+                <span
+                  key={t}
+                  className="bg-jasmine/30 text-grape rounded-full px-2 py-0.5 text-xs font-medium"
+                >
                   {t}
                 </span>
               ))}
@@ -86,26 +112,36 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
         {/* AGENDA */}
         <TabsContent value="agenda" className="mt-4 space-y-3">
           {professional.appointments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No hay citas registradas.</p>
+            <p className="text-muted-foreground text-sm">No hay citas registradas.</p>
           ) : (
             professional.appointments.map((apt) => {
-              const statusInfo = statusLabels[apt.status] || { label: apt.status, variant: 'outline' as const };
+              const statusInfo = statusLabels[apt.status] || {
+                label: apt.status,
+                variant: 'outline' as const,
+              };
               return (
                 <Card key={apt.id} className="border-border/40">
                   <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-grape">
-                          {apt.date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} • {apt.startTime}
+                        <span className="text-grape text-sm font-bold">
+                          {apt.date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}{' '}
+                          • {apt.startTime}
                         </span>
-                        <Badge variant={statusInfo.variant} className="text-xs">{statusInfo.label}</Badge>
+                        <Badge variant={statusInfo.variant} className="text-xs">
+                          {statusInfo.label}
+                        </Badge>
                       </div>
                       <p className="mt-1 text-sm font-medium">{apt.patient.fullName}</p>
-                      <p className="text-xs text-muted-foreground">{apt.service.name}</p>
+                      <p className="text-muted-foreground text-xs">{apt.service.name}</p>
                     </div>
                     {apt.meetLink && (
-                      <a href={apt.meetLink} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-grape hover:bg-plum/20">
+                      <a
+                        href={apt.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-secondary text-grape hover:bg-plum/20 flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium"
+                      >
                         <Video className="h-3.5 w-3.5" /> Meet
                       </a>
                     )}
@@ -121,7 +157,7 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
           {/* Estado Google Calendar */}
           <Card className="border-border/40">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-grape">Google Calendar</CardTitle>
+              <CardTitle className="text-grape text-base">Google Calendar</CardTitle>
             </CardHeader>
             <CardContent>
               {professional.googleCalendarConnected ? (
@@ -131,12 +167,14 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
                     Google Calendar conectado
                   </Badge>
                   {professional.googleEmail && (
-                    <span className="text-sm text-muted-foreground">{professional.googleEmail}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {professional.googleEmail}
+                    </span>
                   )}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <CalendarX className="h-4 w-4 text-muted-foreground" />
+                  <CalendarX className="text-muted-foreground h-4 w-4" />
                   <Badge variant="secondary" className="text-muted-foreground">
                     Google Calendar no conectado
                   </Badge>
@@ -148,19 +186,28 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
           {/* Horario semanal (solo lectura) */}
           <Card className="border-border/40">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-grape">Horario semanal</CardTitle>
-              <p className="text-xs text-muted-foreground">El profesional gestiona su propia disponibilidad</p>
+              <CardTitle className="text-grape text-base">Horario semanal</CardTitle>
+              <p className="text-muted-foreground text-xs">
+                El profesional gestiona su propia disponibilidad
+              </p>
             </CardHeader>
             <CardContent>
               {professional.availabilities.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No hay horarios configurados.</p>
+                <p className="text-muted-foreground text-sm">No hay horarios configurados.</p>
               ) : (
                 <div className="space-y-2">
                   {professional.availabilities.map((slot) => (
-                    <div key={slot.id} className="flex items-center rounded-lg border border-border/40 px-3 py-2">
+                    <div
+                      key={slot.id}
+                      className="border-border/40 flex items-center rounded-lg border px-3 py-2"
+                    >
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{days[slot.dayOfWeek]}</Badge>
-                        <span className="text-sm font-medium">{slot.startTime} - {slot.endTime}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {days[slot.dayOfWeek]}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {slot.startTime} - {slot.endTime}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -172,40 +219,7 @@ export default async function ProfesionalDetailPage({ params }: { params: Promis
 
         {/* TARIFAS */}
         <TabsContent value="tarifas" className="mt-4">
-          <Card className="border-border/40">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-grape">Tarifas por servicio</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {professional.tariffs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No hay tarifas configuradas.</p>
-              ) : (
-                professional.tariffs.map((tariff) => {
-                  const netAmount = tariff.price - (tariff.price * tariff.commission) / 100;
-                  const service = professional.services.find((s) => s.serviceId === tariff.serviceId);
-                  return (
-                    <div key={tariff.id} className="rounded-lg border border-border/40 p-4">
-                      <p className="text-sm font-semibold text-grape">{service?.service.name || 'Servicio'}</p>
-                      <div className="mt-2 grid gap-2 text-sm sm:grid-cols-3">
-                        <div>
-                          <span className="text-xs text-muted-foreground">Precio</span>
-                          <p className="font-medium">${tariff.price.toLocaleString('es-CO')} COP</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-muted-foreground">Comisión</span>
-                          <p className="font-medium">{tariff.commission}%</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-muted-foreground">Neto profesional</span>
-                          <p className="font-semibold text-green-600">${netAmount.toLocaleString('es-CO')} COP</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
+          <TariffsTab professionalId={id} tariffs={tariffsWithServiceName} />
         </TabsContent>
       </Tabs>
     </div>
