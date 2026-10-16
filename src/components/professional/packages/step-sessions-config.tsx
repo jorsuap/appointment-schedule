@@ -45,33 +45,28 @@ export function StepSessionsConfig({
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchPreview = useCallback(
-    async (count: number, svcId: string) => {
-      if (count < 1 || !svcId) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch('/api/professional/packages/calculate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionCount: count, serviceId: svcId }),
-        });
-        if (!res.ok) {
-          throw new Error('Error al calcular precio');
-        }
-        const data: PricePreview = await res.json();
-        setPreview(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Error al calcular precio',
-        );
-        setPreview(null);
-      } finally {
-        setLoading(false);
+  const fetchPreview = useCallback(async (count: number, svcId: string) => {
+    if (count < 1 || !svcId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/professional/packages/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionCount: count, serviceId: svcId }),
+      });
+      if (!res.ok) {
+        throw new Error('Error al calcular precio');
       }
-    },
-    [],
-  );
+      const data: PricePreview = await res.json();
+      setPreview(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al calcular precio');
+      setPreview(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Debounced fetch when sessionCount or serviceId changes
   useEffect(() => {
@@ -104,9 +99,9 @@ export function StepSessionsConfig({
       <div className="space-y-2">
         <label
           htmlFor="session-count"
-          className="flex items-center gap-2 text-sm font-medium text-grape"
+          className="text-grape flex items-center gap-2 text-sm font-medium"
         >
-          <Hash className="h-4 w-4 text-plum" />
+          <Hash className="text-plum h-4 w-4" />
           Cantidad de sesiones
         </label>
         <Input
@@ -118,7 +113,7 @@ export function StepSessionsConfig({
           className="text-base"
           aria-describedby="session-count-hint"
         />
-        <p id="session-count-hint" className="text-xs text-muted-foreground">
+        <p id="session-count-hint" className="text-muted-foreground text-xs">
           Mínimo 1 sesión. A más sesiones, mayor descuento.
         </p>
       </div>
@@ -126,40 +121,36 @@ export function StepSessionsConfig({
       {/* Price preview */}
       {loading && (
         <div className="flex items-center justify-center py-4">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-plum border-t-grape" />
-          <span className="ml-2 text-sm text-muted-foreground">
-            Calculando precio...
-          </span>
+          <div className="border-plum border-t-grape h-5 w-5 animate-spin rounded-full border-2" />
+          <span className="text-muted-foreground ml-2 text-sm">Calculando precio...</span>
         </div>
       )}
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-destructive text-sm">{error}</p>}
 
       {preview && !loading && (
         <Card className="border-plum/30 bg-plum/5">
           <CardContent className="space-y-3 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-grape/70">
+            <p className="text-grape/70 text-xs font-medium tracking-wide uppercase">
               Resumen de precio
             </p>
 
             <div className="space-y-2">
               {/* Price per session */}
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
                   <DollarSign className="h-3.5 w-3.5" />
                   Precio por sesión
                 </span>
-                <span className="text-sm font-medium text-foreground">
-                  {formatCOP.format(preview.pricePerSession + preview.discountPerSession)}
+                <span className="text-foreground text-sm font-medium">
+                  {formatCOP.format(preview.pricePerSession)}
                 </span>
               </div>
 
               {/* Discount per session */}
               {preview.discountPerSession > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="text-muted-foreground flex items-center gap-2 text-sm">
                     <TrendingDown className="h-3.5 w-3.5" />
                     Descuento por sesión
                   </span>
@@ -172,9 +163,7 @@ export function StepSessionsConfig({
               {/* Total discount */}
               {preview.totalDiscount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Ahorro total
-                  </span>
+                  <span className="text-muted-foreground text-sm">Ahorro total</span>
                   <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                     -{formatCOP.format(preview.totalDiscount)}
                   </Badge>
@@ -182,16 +171,14 @@ export function StepSessionsConfig({
               )}
 
               {/* Separator */}
-              <div className="border-t border-plum/20 pt-2">
+              <div className="border-plum/20 border-t pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-grape">
-                    Total del paquete
-                  </span>
-                  <span className="text-lg font-bold text-grape">
+                  <span className="text-grape text-sm font-semibold">Total del paquete</span>
+                  <span className="text-grape text-lg font-bold">
                     {formatCOP.format(preview.totalPrice)}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs">
                   {sessionCount} {sessionCount === 1 ? 'sesión' : 'sesiones'}
                   {preview.discountPerSession > 0 && (
                     <> × {formatCOP.format(preview.pricePerSession)} c/u</>
