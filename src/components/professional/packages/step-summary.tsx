@@ -65,7 +65,7 @@ export function StepSummary({
 }: StepSummaryProps) {
   return (
     <div className="space-y-4">
-      <p className="text-sm font-medium text-grape">
+      <p className="text-grape text-sm font-medium">
         Revisa los detalles antes de crear el paquete
       </p>
 
@@ -73,75 +73,64 @@ export function StepSummary({
         <CardContent className="space-y-4 p-4">
           {/* Patient */}
           <SummaryRow
-            icon={<User className="h-4 w-4 text-plum" />}
+            icon={<User className="text-plum h-4 w-4" />}
             label="Paciente"
             value={patientName || '—'}
           />
 
           {/* Sessions */}
           <SummaryRow
-            icon={<Package className="h-4 w-4 text-plum" />}
+            icon={<Package className="text-plum h-4 w-4" />}
             label="Sesiones"
             value={`${wizardData.sessionCount} ${wizardData.sessionCount === 1 ? 'sesión' : 'sesiones'}`}
           />
 
           {/* Frequency */}
           <SummaryRow
-            icon={<Calendar className="h-4 w-4 text-plum" />}
+            icon={<Calendar className="text-plum h-4 w-4" />}
             label="Frecuencia"
             value={FREQUENCY_LABELS[wizardData.frequency] || wizardData.frequency}
           />
 
           {/* Start date */}
           <SummaryRow
-            icon={<Calendar className="h-4 w-4 text-plum" />}
+            icon={<Calendar className="text-plum h-4 w-4" />}
             label="Fecha de inicio"
             value={formatDate(wizardData.startDate)}
           />
 
           {/* Time */}
           <SummaryRow
-            icon={<Clock className="h-4 w-4 text-plum" />}
+            icon={<Clock className="text-plum h-4 w-4" />}
             label="Hora"
             value={wizardData.startTime || '—'}
           />
 
           {/* Payment method */}
           <SummaryRow
-            icon={<CreditCard className="h-4 w-4 text-plum" />}
+            icon={<CreditCard className="text-plum h-4 w-4" />}
             label="Método de pago"
-            value={
-              PAYMENT_METHOD_LABELS[wizardData.paymentMethod] ||
-              wizardData.paymentMethod
-            }
+            value={PAYMENT_METHOD_LABELS[wizardData.paymentMethod] || wizardData.paymentMethod}
           />
 
           {/* Pricing */}
-          <div className="border-t border-plum/20 pt-3">
+          <div className="border-plum/20 border-t pt-3">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Precio por sesión</span>
-                <span className="font-medium">
-                  {formatCOP(pricePerSession + discountPerSession)}
-                </span>
+                <span className="font-medium">{formatCOP(pricePerSession)}</span>
               </div>
               {discountPerSession > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Descuento por sesión
-                  </span>
+                  <span className="text-muted-foreground">Descuento por sesión</span>
                   <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                     -{formatCOP(discountPerSession)}
                   </Badge>
                 </div>
               )}
-              <div className="flex items-center justify-between border-t border-plum/10 pt-2">
-                <span className="text-sm font-semibold text-grape">
-                  Total del paquete
-                </span>
-                <span className="text-lg font-bold text-grape">
-                  {formatCOP(totalPrice)}
-                </span>
+              <div className="border-plum/10 flex items-center justify-between border-t pt-2">
+                <span className="text-grape text-sm font-semibold">Total del paquete</span>
+                <span className="text-grape text-lg font-bold">{formatCOP(totalPrice)}</span>
               </div>
             </div>
           </div>
@@ -151,7 +140,7 @@ export function StepSummary({
       {/* Confirm CTA */}
       <Button
         size="lg"
-        className="min-h-[44px] w-full bg-grape text-white hover:bg-grape/90"
+        className="bg-grape hover:bg-grape/90 min-h-[44px] w-full text-white"
         onClick={onConfirm}
         disabled={isSubmitting}
       >
@@ -184,8 +173,8 @@ function SummaryRow({
     <div className="flex items-start gap-3">
       <div className="mt-0.5 shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground">{value}</p>
+        <p className="text-muted-foreground text-xs">{label}</p>
+        <p className="text-foreground text-sm font-medium">{value}</p>
       </div>
     </div>
   );
