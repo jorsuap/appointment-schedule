@@ -17,10 +17,7 @@ import { decrypt } from '@/lib/encryption';
 import { refreshAccessToken, createCalendarEvent } from '@/lib/google-oauth';
 import { sendPackageConfirmation } from '@/lib/emails/send-package-confirmation';
 import { sendPackageProfessionalNotification } from '@/lib/emails/send-package-professional-notification';
-import {
-  calculateSessionDates,
-  type Frequency,
-} from './session-scheduler';
+import { calculateSessionDates, type Frequency } from './session-scheduler';
 
 /**
  * Delays execution for the specified number of milliseconds.
@@ -60,18 +57,39 @@ export async function confirmPackage(packageId: string): Promise<void> {
     sessionPackage.frequency.toLowerCase() as Frequency,
   );
 
-  // Apply per-session time overrides if any
-  const overrides = (sessionPackage.sessionTimeOverrides as Record<string, string>) || {};
-  for (const [indexStr, overrideTime] of Object.entries(overrides)) {
-    const idx = parseInt(indexStr, 10);
-    if (idx >= 0 && idx < scheduledSessions.length && overrideTime) {
+  // Apply per-session date and time overrides if any.
+  // Each override is independent and indexed by session position; no cascade.
+  const timeOverrides = (sessionPackage.sessionTimeOverrides as Record<string, string>) || {};
+  const dateOverrides = (sessionPackage.sessionDateOverrides as Record<string, string>) || {};
+
+  // Fetch service duration once (used to recompute endTime when the time changes).
+  const serviceForDuration = await prisma.service.findUnique({
+    where: { id: sessionPackage.serviceId },
+  });
+  const sessionDuration = serviceForDuration?.durationMin || 60;
+
+  // Indices touched by either a date or a time override.
+  const overriddenIndices = new Set<number>(
+    [...Object.keys(timeOverrides), ...Object.keys(dateOverrides)].map((k) => parseInt(k, 10)),
+  );
+
+  for (const idx of overriddenIndices) {
+    if (idx < 0 || idx >= scheduledSessions.length) continue;
+
+    // Date override: replace the session date (local noon to avoid UTC shift).
+    const overrideDate = dateOverrides[String(idx)];
+    if (overrideDate) {
+      scheduledSessions[idx].date = new Date(overrideDate + 'T12:00:00');
+    }
+
+    // Time override: replace startTime and recompute endTime from duration.
+    const overrideTime = timeOverrides[String(idx)];
+    if (overrideTime) {
       scheduledSessions[idx].startTime = overrideTime;
-      // Recalculate endTime for this session
       const [h, m] = overrideTime.split(':').map(Number);
-      const service = await prisma.service.findUnique({ where: { id: sessionPackage.serviceId } });
-      const duration = service?.durationMin || 60;
-      const totalMin = h * 60 + m + duration;
-      scheduledSessions[idx].endTime = `${String(Math.floor(totalMin / 60) % 24).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
+      const totalMin = h * 60 + m + sessionDuration;
+      scheduledSessions[idx].endTime =
+        `${String(Math.floor(totalMin / 60) % 24).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}`;
     }
   }
 
@@ -187,7 +205,10 @@ export async function confirmPackage(packageId: string): Promise<void> {
       meetLink: appt.meetLink,
     })),
   }).catch((err) => {
-    console.error(`[PackageConfirmer] Patient email notification failed for package ${packageId}:`, err);
+    console.error(
+      `[PackageConfirmer] Patient email notification failed for package ${packageId}:`,
+      err,
+    );
   });
 
   // 6. Notify the professional about the confirmed package (fire-and-forget)
@@ -210,6 +231,9 @@ export async function confirmPackage(packageId: string): Promise<void> {
       startTime: appt.startTime,
     })),
   }).catch((err) => {
-    console.error(`[PackageConfirmer] Professional email notification failed for package ${packageId}:`, err);
+    console.error(
+      `[PackageConfirmer] Professional email notification failed for package ${packageId}:`,
+      err,
+    );
   });
 }

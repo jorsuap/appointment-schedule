@@ -39,6 +39,7 @@ const baseWizardData: WizardData = {
   startTime: '15:00',
   paymentMethod: 'bank_transfer',
   sessionTimeOverrides: {},
+  sessionDateOverrides: {},
 };
 
 function renderSummary(overrides: Partial<React.ComponentProps<typeof StepSummary>> = {}) {

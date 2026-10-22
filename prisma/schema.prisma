@@ -345,6 +345,9 @@ model SessionPackage {
   // Per-session time overrides (JSON: { "1": "14:00", "3": "16:00" })
   sessionTimeOverrides Json?
 
+  // Per-session date overrides (JSON: { "1": "2026-12-26", "3": "2027-01-15" })
+  sessionDateOverrides Json?
+
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 

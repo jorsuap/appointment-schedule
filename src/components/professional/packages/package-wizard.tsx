@@ -26,6 +26,8 @@ export interface WizardData {
   paymentMethod: 'wompi' | 'bank_transfer';
   /** Per-session time overrides: key = session index (0-based), value = custom time */
   sessionTimeOverrides: Record<number, string>;
+  /** Per-session date overrides: key = session index (0-based), value = YYYY-MM-DD */
+  sessionDateOverrides: Record<number, string>;
 }
 
 const TOTAL_STEPS = 5;
@@ -63,6 +65,7 @@ export function PackageWizard() {
   const [pricePerSession, setPricePerSession] = useState(0);
   const [discountPerSession, setDiscountPerSession] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [scheduleAvailable, setScheduleAvailable] = useState(false);
   const [wizardData, setWizardData] = useState<WizardData>({
     patientId: '',
     serviceId: '',
@@ -72,6 +75,7 @@ export function PackageWizard() {
     startTime: '',
     paymentMethod: 'wompi',
     sessionTimeOverrides: {},
+    sessionDateOverrides: {},
   });
 
   // Auto-fetch the professional's first service to pre-populate serviceId
@@ -83,7 +87,10 @@ export function PackageWizard() {
           const data = await res.json();
           const services = data.services ?? data ?? [];
           if (services.length > 0) {
-            setWizardData((prev) => ({ ...prev, serviceId: services[0].serviceId || services[0].id }));
+            setWizardData((prev) => ({
+              ...prev,
+              serviceId: services[0].serviceId || services[0].id,
+            }));
           }
         }
       } catch {
@@ -137,7 +144,7 @@ export function PackageWizard() {
       case 2:
         return wizardData.sessionCount > 0 && !!wizardData.serviceId;
       case 3:
-        return !!wizardData.startDate && !!wizardData.startTime;
+        return !!wizardData.startDate && !!wizardData.startTime && scheduleAvailable;
       case 4:
         return !!wizardData.paymentMethod;
       default:
@@ -183,16 +190,10 @@ export function PackageWizard() {
     return (
       <div className="mx-auto w-full max-w-2xl space-y-4">
         {completedData.method === 'wompi' && completedData.paymentLinkUrl && (
-          <PaymentLinkDisplay
-            linkUrl={completedData.paymentLinkUrl}
-            patientName={patientName}
-          />
+          <PaymentLinkDisplay linkUrl={completedData.paymentLinkUrl} patientName={patientName} />
         )}
         {completedData.method === 'bank_transfer' && (
-          <BankTransferDisplay
-            patientName={patientName}
-            totalPrice={totalPrice}
-          />
+          <BankTransferDisplay patientName={patientName} totalPrice={totalPrice} />
         )}
         <Button
           variant="outline"
@@ -209,8 +210,8 @@ export function PackageWizard() {
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-grape">
-            <Package className="h-5 w-5 text-plum" />
+          <CardTitle className="text-grape flex items-center gap-2">
+            <Package className="text-plum h-5 w-5" />
             Nuevo Paquete
           </CardTitle>
           <Badge className="bg-plum/20 text-grape hover:bg-plum/30">
@@ -218,9 +219,7 @@ export function PackageWizard() {
           </Badge>
         </div>
         {/* Step label */}
-        <p className="text-sm text-muted-foreground">
-          {STEP_LABELS[currentStep]}
-        </p>
+        <p className="text-muted-foreground text-sm">{STEP_LABELS[currentStep]}</p>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -251,14 +250,35 @@ export function PackageWizard() {
               sessionCount={wizardData.sessionCount}
               serviceId={wizardData.serviceId}
               sessionTimeOverrides={wizardData.sessionTimeOverrides}
-              onDateChange={(date) => updateWizardData({ startDate: date })}
-              onTimeChange={(time) => updateWizardData({ startTime: time, sessionTimeOverrides: {} })}
-              onFrequencyChange={(frequency) => updateWizardData({ frequency, sessionTimeOverrides: {} })}
+              sessionDateOverrides={wizardData.sessionDateOverrides}
+              onDateChange={(date) =>
+                updateWizardData({
+                  startDate: date,
+                  sessionTimeOverrides: {},
+                  sessionDateOverrides: {},
+                })
+              }
+              onTimeChange={(time) =>
+                updateWizardData({
+                  startTime: time,
+                  sessionTimeOverrides: {},
+                  sessionDateOverrides: {},
+                })
+              }
+              onFrequencyChange={(frequency) =>
+                updateWizardData({ frequency, sessionTimeOverrides: {}, sessionDateOverrides: {} })
+              }
               onSessionTimeOverride={(idx, time) =>
                 updateWizardData({
                   sessionTimeOverrides: { ...wizardData.sessionTimeOverrides, [idx]: time },
                 })
               }
+              onSessionDateOverride={(idx, date) =>
+                updateWizardData({
+                  sessionDateOverrides: { ...wizardData.sessionDateOverrides, [idx]: date },
+                })
+              }
+              onAvailabilityChange={setScheduleAvailable}
             />
           )}
           {currentStep === 4 && (
@@ -298,7 +318,7 @@ export function PackageWizard() {
               size="lg"
               onClick={handleNext}
               disabled={!canProceed()}
-              className="min-h-[44px] min-w-[44px] bg-grape text-white hover:bg-grape/90"
+              className="bg-grape hover:bg-grape/90 min-h-[44px] min-w-[44px] text-white"
             >
               <span className="hidden sm:inline">Siguiente</span>
               <ChevronRight className="h-4 w-4" />

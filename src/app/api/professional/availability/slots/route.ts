@@ -19,7 +19,7 @@ function getDayOfWeekFromStr(dateStr: string): number {
 
 /**
  * GET /api/professional/availability/slots?serviceId=xxx
- * Returns available time slots for the authenticated professional for the next 60 days.
+ * Returns available time slots for the authenticated professional for the next 180 days.
  * Same logic as the public /api/availability but uses session for professionalId.
  */
 export async function GET(request: NextRequest) {
@@ -47,24 +47,23 @@ export async function GET(request: NextRequest) {
 
     // Get blocked dates
     const now = new Date();
-    const sixtyDaysFromNow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+    const WINDOW_DAYS = 180;
+    const windowEnd = new Date(now.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
     const blockedDates = await prisma.blockedDate.findMany({
       where: {
         professionalId,
-        date: { gte: now, lte: sixtyDaysFromNow },
+        date: { gte: now, lte: windowEnd },
       },
     });
 
-    const blockedDateStrings = blockedDates.map(
-      (b) => toDateStr(b.date),
-    );
+    const blockedDateStrings = blockedDates.map((b) => toDateStr(b.date));
 
     // Get existing confirmed/pending appointments
     const existingAppointments = await prisma.appointment.findMany({
       where: {
         professionalId,
-        date: { gte: now, lte: sixtyDaysFromNow },
+        date: { gte: now, lte: windowEnd },
         status: { in: ['CONFIRMED', 'PENDING_PAYMENT'] },
       },
     });
@@ -77,13 +76,17 @@ export async function GET(request: NextRequest) {
       bookedMap.get(key)!.add(appt.startTime);
     }
 
-    // Generate available slots for next 60 days
+    // Generate available slots for next 180 days
     const slots: Record<string, string[]> = {};
     const slotDuration = service.durationMin;
     const today = new Date();
 
-    for (let dayOffset = 1; dayOffset <= 60; dayOffset++) {
-      const futureDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayOffset);
+    for (let dayOffset = 1; dayOffset <= WINDOW_DAYS; dayOffset++) {
+      const futureDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + dayOffset,
+      );
       const dateStr = toDateStr(futureDate);
       const dayOfWeek = getDayOfWeekFromStr(dateStr);
 
@@ -105,7 +108,9 @@ export async function GET(request: NextRequest) {
 
         // Generate slots based on service duration
         for (let t = startMinutes; t + slotDuration <= endMinutes; t += slotDuration) {
-          const hour = Math.floor(t / 60).toString().padStart(2, '0');
+          const hour = Math.floor(t / 60)
+            .toString()
+            .padStart(2, '0');
           const min = (t % 60).toString().padStart(2, '0');
           const timeStr = `${hour}:${min}`;
 

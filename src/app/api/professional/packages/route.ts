@@ -87,22 +87,25 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'VALIDATION_ERROR', details: parsed.error.flatten().fieldErrors },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
     const { patientId, serviceId, sessionCount, frequency, startDate, startTime, paymentMethod } =
       parsed.data;
 
-    // Extract per-session time overrides (not validated by Zod, optional)
+    // Extract per-session overrides (not validated by Zod, optional)
     const sessionTimeOverrides: Record<string, string> = body.sessionTimeOverrides || {};
+    const sessionDateOverrides: Record<string, string> = body.sessionDateOverrides || {};
 
     // 2. Verify patient eligibility (has appointment OR was created by this professional)
     const eligiblePatient = await prisma.patient.findFirst({
       where: {
         id: patientId,
         OR: [
-          { appointments: { some: { professionalId, status: { in: ['CONFIRMED', 'COMPLETED'] } } } },
+          {
+            appointments: { some: { professionalId, status: { in: ['CONFIRMED', 'COMPLETED'] } } },
+          },
           { createdByProfessionalId: professionalId },
         ],
       },
@@ -110,10 +113,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!eligiblePatient) {
-      return NextResponse.json(
-        { error: 'PATIENT_NOT_ELIGIBLE' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'PATIENT_NOT_ELIGIBLE' }, { status: 403 });
     }
 
     // 3. Get ProfessionalTariff for this professional + serviceId
@@ -122,10 +122,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!tariff) {
-      return NextResponse.json(
-        { error: 'TARIFF_NOT_FOUND' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'TARIFF_NOT_FOUND' }, { status: 404 });
     }
 
     // 4. Query active DiscountTiers and calculate price
@@ -147,10 +144,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!service) {
-      return NextResponse.json(
-        { error: 'SERVICE_NOT_FOUND' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'SERVICE_NOT_FOUND' }, { status: 404 });
     }
 
     const endTime = addMinutesToTime(startTime, service.durationMin);
@@ -167,7 +161,7 @@ export async function POST(request: NextRequest) {
       startTime,
       endTime,
       sessionCount,
-      frequencyMap[frequency]
+      frequencyMap[frequency],
     );
 
     // 7. Create SessionPackage in DB with status PENDING_PAYMENT
@@ -186,7 +180,10 @@ export async function POST(request: NextRequest) {
         totalPrice: priceResult.totalPrice,
         paymentMethod: paymentMethod === 'wompi' ? 'WOMPI' : 'BANK_TRANSFER',
         status: 'PENDING_PAYMENT',
-        sessionTimeOverrides: Object.keys(sessionTimeOverrides).length > 0 ? sessionTimeOverrides : undefined,
+        sessionTimeOverrides:
+          Object.keys(sessionTimeOverrides).length > 0 ? sessionTimeOverrides : undefined,
+        sessionDateOverrides:
+          Object.keys(sessionDateOverrides).length > 0 ? sessionDateOverrides : undefined,
       },
       include: {
         patient: {
@@ -227,14 +224,17 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({
-        package: updatedPackage,
-        sessions,
-        paymentLink: {
-          linkId: paymentLink.linkId,
-          linkUrl: paymentLink.linkUrl,
+      return NextResponse.json(
+        {
+          package: updatedPackage,
+          sessions,
+          paymentLink: {
+            linkId: paymentLink.linkId,
+            linkUrl: paymentLink.linkUrl,
+          },
         },
-      }, { status: 201 });
+        { status: 201 },
+      );
     }
 
     // paymentMethod === 'bank_transfer'
@@ -242,11 +242,14 @@ export async function POST(request: NextRequest) {
       where: { isActive: true },
     });
 
-    return NextResponse.json({
-      package: sessionPackage,
-      sessions,
-      bankDetails,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        package: sessionPackage,
+        sessions,
+        bankDetails,
+      },
+      { status: 201 },
+    );
   } catch (err) {
     console.error('[professional/packages] POST error:', err);
     return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });
